@@ -4,6 +4,7 @@ import { ElevatorPanel } from './components/ElevatorPanel'
 import { Elevator, type ElevatorHandle } from './components/Elevator'
 import { AddButton } from './components/AddButton'
 import { SharedSvgDefs } from './components/SharedSvgDefs'
+import { ObjectSheet, type ObjectSheetHandle } from './components/ObjectSheet'
 import { FLOORS } from './data/floors'
 import { useReducedMotion } from './lib/useReducedMotion'
 import { Home } from './floors/Home'
@@ -17,6 +18,7 @@ function App() {
   const [busy, setBusy] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const elevatorRef = useRef<ElevatorHandle>(null)
+  const objectSheetRef = useRef<ObjectSheetHandle>(null)
   const mainRef = useRef<HTMLElement>(null)
   const reducedMotion = useReducedMotion()
 
@@ -42,12 +44,16 @@ function App() {
     setBusy(false)
   }
 
+  function openObjet(objetId: number, opener: HTMLElement | null) {
+    objectSheetRef.current?.open(objetId, opener)
+  }
+
   function renderFloor() {
     switch (current) {
       case 0:
         return <Home />
       case 1:
-        return <Collections onToast={setToast} />
+        return <Collections onOpenObjet={openObjet} />
       default:
         return <Stats />
     }
@@ -64,6 +70,7 @@ function App() {
       {toast && <div className="toast">{toast}</div>}
       <ElevatorPanel current={current} disabled={busy} onGo={goTo} />
       <Elevator ref={elevatorRef} />
+      <ObjectSheet ref={objectSheetRef} onToast={setToast} />
     </div>
   )
 }

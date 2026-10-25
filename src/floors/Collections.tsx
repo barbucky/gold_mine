@@ -11,7 +11,7 @@ import type { Objet } from '../db/types'
 const euro = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
 
 type CollectionsProps = {
-  onToast: (message: string) => void
+  onOpenObjet: (objetId: number, opener: HTMLElement | null) => void
 }
 
 type StatsSalle = {
@@ -37,7 +37,7 @@ function calculerStats(objets: Objet[]): StatsSalle {
   }
 }
 
-export function Collections({ onToast }: CollectionsProps) {
+export function Collections({ onOpenObjet }: CollectionsProps) {
   const [salleOuverteId, setSalleOuverteId] = useState<number | null>(null)
   const reducedMotion = useReducedMotion()
   const estPremierRendu = useRef(true)
@@ -164,7 +164,7 @@ export function Collections({ onToast }: CollectionsProps) {
           <ul className="items">
             {objetsDeLaSalle.map((objet) => (
               <li className="item" key={objet.id}>
-                <button className="item-open" type="button" onClick={() => onToast('Fiche objet : arrive à l’étape 4.')}>
+                <button className="item-open" type="button" onClick={(e) => onOpenObjet(objet.id!, e.currentTarget)}>
                   <span className="vit">
                     <Vitrine />
                   </span>
