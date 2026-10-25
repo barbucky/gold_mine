@@ -391,11 +391,11 @@ reglages  cle, valeur   (son, introVue, derniereSauvegarde…)
 
 \*\*Détourage :\*\*
 
-1\. Bouton « Détourer » dans l'app, avec un modèle qui tourne dans le navigateur (par exemple la bibliothèque background-removal d'IMG.LY ou un modèle type RMBG via Transformers.js — \*\*à évaluer\*\*, vérifier la licence). Modèle téléchargé une fois puis mis en cache. Indicateur de progression.
+1\. \*\*Reporté en v2\*\* — bouton « Détourer » avec un modèle tournant dans le navigateur. Piste retenue après évaluation : `@imgly/background-removal` (licence AGPL, compatible usage personnel), modèle `isnet_quint8` (~40 Mo, téléchargé une fois puis mis en cache), API `removeBackground(blob) → Blob` avec callback de progression. Voir `decisions.md` pour le détail de l'évaluation (vulnérabilité `zod` qui a motivé le report, alternative RMBG-1.4 écartée pour licence non-commerciale).
 
-2\. Solution de secours toujours disponible : importer un PNG déjà détouré par iOS (Photos → appui long → copier le sujet).
+2\. Solution de secours, disponible dès maintenant (étape 5) : importer un PNG déjà détouré par iOS (Photos → appui long → copier le sujet) — détecté automatiquement à l'import (coins transparents).
 
-3\. L'utilisateur peut comparer et garder l'original si le détourage est raté.
+3\. \[v2\] L'utilisateur pourra comparer et garder l'original si le détourage automatique est raté.
 
 \*\*Conseils affichés à l'utilisateur\*\* : objet photographié de face, à sa hauteur, lumière douce, fond uni.
 
@@ -445,7 +445,7 @@ Chaque étape se termine par un test sur téléphone et un commit.
 
 | 5 | Photos : import, redimensionnement, miniature, recadrage, stockage | Une photo importée apparaît partout (liste, accueil, fiche) |
 
-| 6 | Détourage dans le navigateur + secours PNG iOS | Détourage d'un objet simple en moins de 10 s sur iPhone récent |
+| 6 | ~~Détourage dans le navigateur~~ reporté en v2 (secours PNG iOS déjà couvert par l'étape 5) | Étape satisfaite par l'étape 5 — rien à construire pour l'instant |
 
 | 7 | Accueil | Dernières acquisitions issues des vraies données |
 

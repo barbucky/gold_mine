@@ -2,6 +2,7 @@ import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 're
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/database'
 import { modifierObjet } from '../db/objets'
+import { importerPhoto } from '../db/photos'
 import { Pedestal } from './Pedestal'
 import { FavoriteCoin } from './FavoriteCoin'
 import { useReducedMotion } from '../lib/useReducedMotion'
@@ -110,6 +111,18 @@ export const ObjectSheet = forwardRef<ObjectSheetHandle, ObjectSheetProps>(funct
     await modifierObjet(objet.id!, { favori: !objet.favori })
   }
 
+  async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file || !objet) return
+    try {
+      await importerPhoto(objet.id!, file)
+      onToast('Photo placée dans la vitrine.')
+    } catch (err) {
+      onToast(err instanceof Error ? err.message : 'Cette image ne peut pas être utilisée.')
+    }
+  }
+
   return (
     <div
       className="sheet-overlay"
@@ -144,7 +157,7 @@ export const ObjectSheet = forwardRef<ObjectSheetHandle, ObjectSheetProps>(funct
         </div>
 
         <div className="stage" ref={stageRef}>
-          <Pedestal />
+          <Pedestal objetId={objetId ?? undefined} />
         </div>
 
         {objet && (
@@ -173,6 +186,15 @@ export const ObjectSheet = forwardRef<ObjectSheetHandle, ObjectSheetProps>(funct
                 {descOuverte ? 'Réduire' : 'Lire la suite'}
               </button>
             )}
+
+            <label className="more photo-btn" htmlFor="dPhoto">
+              Essayer avec une photo
+            </label>
+            <input id="dPhoto" className="vh" type="file" accept="image/*" onChange={handlePhotoChange} />
+            <p className="photo-tip">
+              Conseil : un objet détouré (fond transparent) s&rsquo;intègre le mieux. Sur iPhone, un appui long sur l&rsquo;objet dans Photos
+              permet de copier le sujet sans le fond.
+            </p>
 
             <dl className="d-facts">
               <div>

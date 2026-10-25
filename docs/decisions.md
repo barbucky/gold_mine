@@ -184,3 +184,19 @@ Format : \*\*décision\*\* — raison / précision. ❌ = option refusée.
 
 &#x20;
 
+\### Détourage par IA dans le navigateur : reporté en v2 (étape 6)
+
+&#x20;
+
+\- \*\*Évaluation faite\*\* (pour reprise en v2, ne pas la refaire) :
+
+&#x20; - \*\*@imgly/background-removal\*\* : licence AGPL (gratuite, acceptable en usage personnel non redistribué). API minimale : `removeBackground(blob) → Promise<Blob>`. Modèles : `isnet_quint8` (~40 Mo, quelques artefacts) ou `isnet`/`isnet_fp16` (~80 Mo, meilleure qualité). Fonctionne en React/Vite (la mention « NextJS 15 only » de la doc ne concerne qu'un guide d'intégration, pas une limite réelle — projets React tiers confirmés). Perf optimale nécessite des en-têtes serveur `Cross-Origin-Opener-Policy`/`Cross-Origin-Embedder-Policy` (SharedArrayBuffer) ; sans eux, fonctionne quand même en mono-thread (juste plus lent). C'était la piste retenue.
+
+&#x20; - ❌ \*\*RMBG-1.4 via Transformers.js\*\* : licence non-commerciale (OK pour un usage perso, mais plus restrictive), intégration plus générale/moins directe.
+
+\- \*\*❌ Reporté\*\* : `npm audit` a signalé une vulnérabilité haute sévérité dans `zod` (dépendance interne d'`@imgly/background-removal`, exhaustion mémoire sur des collections surdimensionnées). Risque jugé faible dans ce contexte (pas de données tierces non fiables, usage local), mais pas de correctif propre disponible sans rétrograder la librairie — décision de ne pas introduire cette dépendance maintenant.
+
+\- \*\*Solution de secours\*\* (déjà en place depuis l'étape 5) : import d'un PNG déjà détouré via iOS (Photos → copier le sujet), détecté automatiquement à l'import.
+
+&#x20;
+

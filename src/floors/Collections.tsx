@@ -166,7 +166,7 @@ export function Collections({ onOpenObjet }: CollectionsProps) {
               <li className="item" key={objet.id}>
                 <button className="item-open" type="button" onClick={(e) => onOpenObjet(objet.id!, e.currentTarget)}>
                   <span className="vit">
-                    <Vitrine />
+                    <Vitrine objetId={objet.id} />
                   </span>
                   <span className="info">
                     <span className="it-title">{objet.nom}</span>
