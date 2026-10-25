@@ -334,13 +334,19 @@ Stockage local IndexedDB (Dexie.js). Aucune donnée ne quitte le téléphone. De
 
 ```
 
-salles    id, numero ("I", "II"…), nom, ordre, creeLe
+salles    id, numero ("I", "II"…), nom, ordre, creeLe,
 
-objets    id, salleId, nom, marque, dateAffichee ("Circa 1956"), mois, annee (nombre),
+&#x20;         champsPersonnalises (string\[], ex. \["Club","Saison","Taille"])
 
-&#x20;         prix (centimes, EUR), provenance, inventaire ("2026.118"),
+objets    id, salleId, nom, marque, dateAffichee ("Circa 1956"),
 
-&#x20;         description, favori (bool), acquisLe, creeLe, modifieLe
+&#x20;         achatMois (1-12, optionnel), achatAnnee (nombre),
+
+&#x20;         prixAchat (centimes, EUR), prixRevente (centimes, EUR),
+
+&#x20;         provenance, inventaire ("2026.118"), description, favori (bool),
+
+&#x20;         creeLe, modifieLe, details (Record<string,string>, ex. {"Club":"PSG","Saison":"2023-2024"})
 
 photos    id, objetId, originale (Blob), detouree (Blob | null), miniature (Blob),
 
@@ -349,6 +355,10 @@ photos    id, objetId, originale (Blob), detouree (Blob | null), miniature (Blob
 reglages  cle, valeur   (son, introVue, derniereSauvegarde…)
 
 ```
+
+&#x20;
+
+\- \*\*Champs personnalisés par salle\*\* : chaque salle définit un gabarit de noms de champs (ex. Club, Saison, Taille pour une salle « Maillots » ; Auteur, Éditeur, Pages pour une salle « Livres »). Le formulaire d'ajout lit ce gabarit et affiche un champ texte par nom défini ; la valeur saisie est stockée dans `details`, propre à chaque objet. Modifier le gabarit d'une salle ne touche pas rétroactivement les objets déjà créés — seulement les prochains ajouts/modifications.
 
 &#x20;
 
@@ -471,7 +481,7 @@ Chaque étape se termine par un test sur téléphone et un commit.
 
 6\. \*\*Actions du menu « ⋯ »\*\*.
 
-7\. \*\*Valeur\*\* : prix d'achat, valeur estimée, ou les deux ? Devise unique (EUR) ?
+7\. \*\*Valeur\*\* : les deux prix existent dans les données (`prixAchat`, `prixRevente`, § 5), devise unique EUR. Reste à décider : lequel afficher par défaut sur chaque écran (listes, fiche, accueil), et si les deux sont visibles quelque part.
 
 &#x20;
 

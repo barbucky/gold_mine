@@ -150,3 +150,27 @@ Format : \*\*décision\*\* — raison / précision. ❌ = option refusée.
 
 &#x20;
 
+\### Champs personnalisés par salle (étape 2)
+
+&#x20;
+
+\- ❌ Colonnes fixes par type d'objet (club, taille, auteur, éditeur…) : la plupart resteraient vides selon la catégorie, et chaque nouveau type de collection demanderait de modifier le schéma.
+
+\- ❌ Attribut/valeur normalisé dans une table séparée (EAV) : plus « requêtable » mais complexité inutile pour une appli mono-utilisateur.
+
+\- \*\*Champ souple `details` sur chaque objet\*\* (clé/valeur libre), avec un \*\*gabarit de noms de champs porté par la salle\*\* (`champsPersonnalises`) pour que le formulaire d'ajout propose des champs cohérents par catégorie (ex. Club/Saison/Taille pour une salle « Maillots »). Changer le gabarit d'une salle n'affecte pas rétroactivement les objets déjà créés.
+
+&#x20;
+
+\### Dates et prix de l'objet (étape 2)
+
+&#x20;
+
+\- ❌ `dateAffichee` + `mois`/`annee` + `acquisLe` séparés : trois représentations de la même date d'achat, source de confusion.
+
+\- \*\*`achatMois` (optionnel) + `achatAnnee`\*\* : une seule date d'achat structurée, utilisée pour les filtres et les statistiques. `dateAffichee` reste à part, en texte libre, pour l'affichage (« Circa 1956 »).
+
+\- \*\*`prix` renommé en `prixAchat`\*\*, et ajout de \*\*`prixRevente`\*\* (prix max estimé à la revente) : les deux coexistent désormais dans les données (répond à la question ouverte § 9.7). Reste à décider lequel afficher par défaut sur chaque écran.
+
+&#x20;
+

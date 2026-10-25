@@ -9,7 +9,9 @@ export type ElevatorHandle = {
 }
 
 const EASE_DOORS = 'cubic-bezier(.65,0,.35,1)'
-const angle = (i: number) => -60 + i * 40
+// Répartit les paliers de façon symétrique sur l'arc du cadran (±60°), quel que soit leur nombre.
+const DIAL_SPAN = 120
+const angle = (i: number) => (FLOORS.length <= 1 ? 0 : -DIAL_SPAN / 2 + (i * DIAL_SPAN) / (FLOORS.length - 1))
 
 export const Elevator = forwardRef<ElevatorHandle>(function Elevator(_props, ref) {
   const lintelRef = useRef<HTMLDivElement>(null)

@@ -115,6 +115,38 @@
   margin: 0;
 }
 
+.primary {
+  justify-self: start;
+  background: linear-gradient(#e2c27f, #b8913f);
+  color: #1c1405;
+  border: 0;
+  border-radius: 999px;
+  padding: 12px 26px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 2px 0 var(--brass-lo);
+}
+
+/* Liste de vérification temporaire (étape 2) : remplacée par les vignettes sous vitre à l'étape 3. */
+.debug-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.debug-list li {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
 /* ---------- Panneau d'appel ---------- */
 .panel {
   display: grid;
