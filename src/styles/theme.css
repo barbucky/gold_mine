@@ -1,0 +1,22 @@
+/* Palette et typographie — docs/specs.md § 2. Thème unique sombre. */
+:root {
+  --ink: #08111f;
+  --wall: #0e1c33;
+  --wall-2: #16294a;
+  --brass: #c9a45c;
+  --brass-hi: #e8cc8c;
+  --brass-lo: #8a6a2e;
+  --fg: #e6ebf3;
+  --muted: #9eb0ca;
+  --line: rgba(201, 164, 92, 0.26);
+  --paper: #efe6d2;
+  --paper-ink: #211a12;
+
+  --font-display: 'Sora', system-ui, sans-serif;
+  --font-body: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-hand: 'Caveat', 'Segoe Script', 'Bradley Hand', cursive;
+  --font-mono: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
+  --font-classic: 'Cinzel', 'Trajan Pro', Georgia, serif;
+
+  color-scheme: dark;
+}
