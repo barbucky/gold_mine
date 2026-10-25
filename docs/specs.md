@@ -100,6 +100,10 @@ Libellés de section : Manrope 700, 11 px, majuscules, espacement 0,14 em, coule
 
 &#x20;
 
+Exception : l'indicateur d'étage dans l'en-tête (ex. « Rez-de-chaussée · Accueil », à droite de « Mc's Gold Mine ») est plus discret — Manrope 700, 9 px.
+
+&#x20;
+
 \### Composants récurrents
 
 &#x20;
@@ -132,7 +136,7 @@ New Rocker n'est utilisée que pour cette icône statique, jamais dans l'interfa
 
 &#x20;
 
-Quatre étages, boutons d'appel ronds dorés en pied de page (le bouton actif s'illumine) :
+Trois étages, boutons d'appel ronds dorés en pied de page (le bouton actif s'illumine) :
 
 &#x20;
 
@@ -144,9 +148,7 @@ Quatre étages, boutons d'appel ronds dorés en pied de page (le bouton actif s'
 
 | 1 | 1er étage | Mes collections |
 
-| 2 | 2e étage | Ajouter un objet |
-
-| 3 | 3e étage | Statistiques |
+| 2 | 2e étage | Statistiques |
 
 &#x20;
 
@@ -156,13 +158,27 @@ L'en-tête affiche l'étage et la section : « 1er étage · Salle III ».
 
 \*\*Animation de transition\*\* (environ 2,3 s pour un étage) :
 
-1\. Fermeture : deux portes en laiton brossé glissent depuis les côtés (560 ms) ; un bandeau supérieur descend (420 ms) avec un cadran à aiguille (R, 1, 2, 3) et des flèches ▲▼.
+1\. Fermeture : deux portes en laiton brossé glissent depuis les côtés (560 ms) ; un bandeau supérieur descend (420 ms) avec un cadran à aiguille (R, 1, 2) et des flèches ▲▼.
 
 2\. Trajet : 950 ms + 380 ms par étage supplémentaire. L'aiguille tourne vers l'étage cible, la flèche du sens s'allume, des reflets lumineux défilent sur les portes (vers le bas en montée, vers le haut en descente), légère secousse de cabine au départ et à l'arrivée, nom de l'étage mis à jour à chaque palier.
 
 3\. Ouverture : portes (620 ms, délai 180 ms), bandeau qui remonte (420 ms, délai 520 ms).
 
 Avec `prefers-reduced-motion` : simple fondu (≈ 300 ms).
+
+&#x20;
+
+\### Bouton flottant « + » (ajouter un objet) \[à concevoir]
+
+&#x20;
+
+Pas d'étage dédié : un bouton rond doré flottant, visible sur tous les étages (ancré au-dessus du panneau d'ascenseur), ouvre le formulaire d'ajout en panneau coulissant — même logique que la fiche objet (§ 4.4) plutôt qu'une navigation en ascenseur. Évite d'avoir à traverser plusieurs étages pour ajouter un objet depuis une salle.
+
+&#x20;
+
+Base de la maquette : champs Nom, Marque, Salle, Mois, Année, Provenance, Notes, Photo ; bouton « Inventorier ».
+
+À compléter : prix d'achat, prix max à la revente, date d'acquisition, date affichée (« Mois Année… »), n° d'inventaire automatique (`AAAA.NNN`), détourage de la photo (§ 6), modification d'un objet existant, création et gestion des salles.
 
 &#x20;
 
@@ -235,15 +251,8 @@ Bouton « Rejouer l'intro » dans l'en-tête.
 \- Section « Dernières acquisitions » + lien « Tout voir » (→ ascenseur vers l'étage 1).
 
 \- Cartes : \*\*miniature sous vitre dans l'angle supérieur gauche\*\* (76 px) ; nom, marque à la ligne ; prix doré aligné à droite ; description sur 2 lignes ; pied de carte : pastille « {nom de la collection}», date manuscrite, ancienneté (« il y a 2 jours »). Tap → fiche objet.
-- Icone Ajouter un objet et écran \[à concevoir]
 
 &#x20;
-
-Base de la maquette : champs Nom, Marque, Salle, Mois, Année, Provenance, Notes, Photo ; bouton « Inventorier ».
-
-À compléter : prix d'achat, prix max à la revente, date d'acquisition, date affichée (« Mois Année… »), n° d'inventaire automatique (`AAAA.NNN`), détourage de la photo (§ 6), modification d'un objet existant, création et gestion des salles.
-
-
 
 \### 4.3 Mes collections (1) \[validé]
 

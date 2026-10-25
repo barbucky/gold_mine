@@ -140,3 +140,13 @@ Format : \*\*décision\*\* — raison / précision. ❌ = option refusée.
 
 &#x20;
 
+\### Ascenseur : « Ajouter un objet » retiré des étages (étape 1)
+
+&#x20;
+
+\- ❌ Étage 2 dédié « Ajouter un objet » (version initiale de specs.md § 3) : obligeait à reprendre l'ascenseur depuis n'importe quelle salle pour ajouter un objet.
+
+\- \*\*Bouton flottant « + »\*\*, visible sur tous les étages, ouvre le formulaire d'ajout en panneau coulissant (comme la fiche objet) plutôt qu'un étage dédié. L'ascenseur passe à \*\*trois étages\*\* : R · Accueil, 1 · Mes collections, 2 · Statistiques.
+
+&#x20;
+
