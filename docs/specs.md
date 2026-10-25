@@ -110,7 +110,7 @@ Exception : l'indicateur d'étage dans l'en-tête (ex. « Rez-de-chaussée · Ac
 
 \- \*\*Vignette sous vitre\*\* : carré, fond bleu nuit doucement éclairé, objet centré et posé (ombre douce), reflets diagonaux et liseré clair de bord de vitre. Pas de chapeau, pas de rampe lumineuse.
 
-\- \*\*Pièce « MC » (favori)\*\* : disque avec monogramme « MC » en Cinzel et grènetis. Grise (étain) si non favori, dorée avec léger halo si favori. Taille 28 px dans les listes.
+\- \*\*Pièce (favori)\*\* : réutilise l'icône de l'app (médaillon doré en relief, monogramme « M », § 2 Icône de l'application). Grise (désaturée) si non favori, dorée avec léger halo si favori. Taille 28 px dans les listes.
 
 \- \*\*Cartes\*\* : rayon 16–18 px, fond dégradé bleu, bordure blanche à 8 % d'opacité, ombre portée douce.
 

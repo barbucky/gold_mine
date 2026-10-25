@@ -3,13 +3,13 @@ import { Header } from './components/Header'
 import { ElevatorPanel } from './components/ElevatorPanel'
 import { Elevator, type ElevatorHandle } from './components/Elevator'
 import { AddButton } from './components/AddButton'
+import { SharedSvgDefs } from './components/SharedSvgDefs'
 import { FLOORS } from './data/floors'
 import { useReducedMotion } from './lib/useReducedMotion'
 import { Home } from './floors/Home'
 import { Collections } from './floors/Collections'
 import { Stats } from './floors/Stats'
 
-const FLOOR_VIEWS = [Home, Collections, Stats]
 const TOAST_DURATION = 3000
 
 function App() {
@@ -42,13 +42,23 @@ function App() {
     setBusy(false)
   }
 
-  const FloorView = FLOOR_VIEWS[current]
+  function renderFloor() {
+    switch (current) {
+      case 0:
+        return <Home />
+      case 1:
+        return <Collections onToast={setToast} />
+      default:
+        return <Stats />
+    }
+  }
 
   return (
     <div className="app">
+      <SharedSvgDefs />
       <Header floor={FLOORS[current]} />
       <main className="app-main" ref={mainRef}>
-        <FloorView />
+        {renderFloor()}
       </main>
       <AddButton onClick={() => setToast('Le formulaire d’ajout arrive à l’étape 9.')} />
       {toast && <div className="toast">{toast}</div>}

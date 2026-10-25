@@ -174,3 +174,13 @@ Format : \*\*décision\*\* — raison / précision. ❌ = option refusée.
 
 &#x20;
 
+\### Pièce favori : réutilisation de l'icône de l'app (étape 3)
+
+&#x20;
+
+\- ❌ Pièce dessinée en SVG avec monogramme « MC » en Cinzel (version initiale) : deux dessins de pièce différents dans l'app (icône vs favori), pas cohérent.
+
+\- \*\*La pièce favori réutilise `favicon-32.png`\*\* (même médaillon doré en relief, monogramme « M », voir § 2 Icône de l'application) : une seule pièce pour toute la marque. État non favori obtenu par filtre CSS (`grayscale` + assombrissement), pas par un second visuel. Le monogramme « MC » reste utilisé pour la pièce de la porte dans l'intro 3D (§ 4.1), rendue séparément en Three.js.
+
+&#x20;
+

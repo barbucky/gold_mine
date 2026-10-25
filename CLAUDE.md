@@ -48,9 +48,9 @@ Toujours le nom de l'objet d'abord, puis la marque à la ligne, plus petite. Par
 
 Palette bleu nuit + or, définie en variables CSS (voir specs.md § Design). Aucune couleur en dur dans les composants.
 
-Polices : Sora (titres), Manrope (texte), Caveat (dates manuscrites), IBM Plex Mono (n° d'inventaire), Cinzel (intro, plaque, monogramme « MC » des pièces).
+Polices : Sora (titres), Manrope (texte), Caveat (dates manuscrites), IBM Plex Mono (n° d'inventaire), Cinzel (intro, plaque, monogramme de la pièce de la porte en 3D).
 
-Les favoris sont signalés par la pièce « MC » : grise si non favori, dorée si favori. Jamais un signet, une étoile ou un cœur.
+Les favoris sont signalés par la pièce (icône de l'app, médaillon doré) : grise si non favori, dorée si favori. Jamais un signet, une étoile ou un cœur.
 
 Vitrines : verre sans arêtes dorées, sans chapeau, sans faisceau lumineux. Les objets ne lévitent pas et ne tournent pas.
 
