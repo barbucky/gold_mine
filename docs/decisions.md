@@ -266,5 +266,45 @@ Format : \*\*décision\*\* — raison / précision. ❌ = option refusée.
 
 &#x20;
 
+\### Statistiques (étape 11)
+
+&#x20;
+
+\- \*\*Champ `anneeCreation` (optionnel)\*\* ajouté à `Objet` : année de fabrication/création, distincte de `achatAnnee` (année d'acquisition). Pas garanti pour chaque objet — la stat « objet le plus ancien » utilise `anneeCreation ?? achatAnnee` par objet.
+
+\- \*\*Filtres/tri\*\* placés dans « Mes collections » (liste d'objets d'une salle), pas dans Statistiques : c'est là qu'on parcourt les objets, donc l'endroit naturel pour les trier. Statistiques reste consacré aux vues d'ensemble (KPIs, barres, graphiques).
+
+\- \*\*Courbe d'évolution\*\* : comme l'app ne garde pas d'historique de valorisation, c'est une courbe de dépense cumulée (somme des prix d'achat dans le temps), pas une estimation de valeur de marché — présentée comme telle pour éviter toute confusion.
+
+\- \*\*Graphiques en SVG/CSS fait main\*\* (camembert via `conic-gradient`, histogrammes/courbes en SVG), pas de librairie de graphiques tierce : cohérent avec la stack minimale du projet.
+
+\- \*\*Palette élargie pour les graphiques uniquement\*\* : la règle « bleu nuit + or, aucune couleur en dur » (§ 2) rendait un camembert à plusieurs salles illisible (nuances d'un seul doré trop proches). Ajout de 5 variables `--chart-1` à `--chart-5` (dérivées du thème, voir specs.md § 2), réservées aux graphiques. La légende textuelle (nom de salle + %) reste la source d'information principale, la couleur n'étant qu'un repère secondaire.
+
+&#x20;
+
+\- \*\*« Date affichée » auto-générée\*\* : au lieu d'être toujours saisie à la main, elle se déduit automatiquement de l'année de création (ou de l'année d'achat à défaut) sous la forme « Circa AAAA », tant que l'utilisateur ne l'a pas modifiée lui-même (un champ texte modifié manuellement n'est plus jamais réécrit automatiquement).
+
+&#x20;
+
+\- \*\*Gabarit de champs personnalisés par salle, enfin accessible\*\* : la mécanique « progression » (prévue dès l'étape 9 pour des séries comme les mangas) existait dans les données mais aucune interface ne permettait de créer un champ sur une salle — `champsPersonnalises` était toujours vide à la création. Ajout d'une action « Champs » dans « Gérer les salles » (ajout/suppression, nom + type Texte/Progression).
+
+&#x20;
+
+\- \*\*Multiplicateur de valeur par volumes possédés\*\* : si la salle d'un objet définit un champ « progression », son prix d'achat et sa revente potentielle (partout où ils sont affichés ou totalisés — fiche, accueil, collections, statistiques) sont multipliés par le nombre de volumes \*\*possédés\*\*, pas par le total de la série — reflète la valeur réelle de ce qu'on possède, pas un objectif. Permet de n'entrer que le nom de la série et le prix unitaire.
+
+&#x20;
+
+\- \*\*Champ « progression » revu en « du tome / au tome / série complète »\*\* (remplace l'ancien couple actuel/total) : `{ du, au, complet }`. Le nombre possédé se déduit (`au − du + 1`) plutôt que d'être ressaisi, et couvre le cas d'une collection commencée en cours de série (ex. tomes 5 à 20, les 4 premiers manquants). L'interrupteur « Série complète » déclenche un ruban doré sur la vignette de l'objet (angle supérieur gauche) dans les listes (accueil, collections).
+
+&#x20;
+
+\- \*\*Champ `achatAnneeFin` (optionnel)\*\* : pour une série achetée sur plusieurs années (ex. mangas complétés entre 2020 et 2024), la valeur d'achat est répartie à parts égales entre `achatAnnee` et `achatAnneeFin` dans les statistiques par année (histogramme, courbe d'évolution) — évite qu'une série entière ne pèse artificiellement sur une seule année. Approximation volontaire (répartition régulière, pas les vraies dates de chaque tome) : suffisant pour une vue d'ensemble, sans devoir saisir chaque volume séparément.
+
+&#x20;
+
+\- \*\*Bug corrigé : rectangle sombre pendant la transition ascenseur → salle\*\* : `.lift` (grille `auto 1fr`) réservait une rangée de la hauteur du lintel même quand celui-ci glissait hors champ (transform ne change pas le gabarit de la grille), laissant voir le fond de l'app par transparence. Fond `#050b16` (identique à `.shaft`) ajouté directement sur `.lift` pour combler cette rangée dans tous les cas.
+
+&#x20;
+
 &#x20;
 

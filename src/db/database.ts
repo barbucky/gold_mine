@@ -15,6 +15,12 @@ class McGoldMineDB extends Dexie {
       photos: '++id, objetId',
       reglages: 'cle',
     })
+    this.version(2).stores({
+      salles: '++id, ordre',
+      objets: '++id, salleId, favori, achatAnnee, anneeCreation',
+      photos: '++id, objetId',
+      reglages: 'cle',
+    })
   }
 }
 

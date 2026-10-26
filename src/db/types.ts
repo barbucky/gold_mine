@@ -5,8 +5,11 @@ export type ChampPersonnalise = {
   type: TypeChamp
 }
 
-/** Valeur d'un champ personnalisé : texte libre, ou progression (ex. volumes possédés). */
-export type ValeurChamp = string | { actuel: number; total: number }
+/** Progression d'une série (ex. mangas) : tomes possédés du n° `du` au n° `au`, et si la série est complète. */
+export type ValeurProgression = { du: number; au: number; complet: boolean }
+
+/** Valeur d'un champ personnalisé : texte libre, ou progression d'une série. */
+export type ValeurChamp = string | ValeurProgression
 
 export type Salle = {
   id?: number
@@ -25,13 +28,19 @@ export type Objet = {
   marque: string
   /** Texte libre affiché, ex. "Circa 1956". */
   dateAffichee: string
+  /** Année de fabrication/création de l'objet (distincte de l'achat), pas toujours connue. */
+  anneeCreation?: number
   achatMois?: number
   achatAnnee?: number
+  /** Dernière année d'achat si l'acquisition s'est étalée sur plusieurs années (ex. série de mangas) — sert à répartir la valeur dans les statistiques, pas à l'affichage courant. */
+  achatAnneeFin?: number
   /** Centimes, EUR. */
   prixAchat: number
   /** Centimes, EUR. */
   prixRevente?: number
   provenance: string
+  /** Référence libre (ex. référence constructeur/catalogue), distincte du n° d'inventaire. */
+  reference?: string
   inventaire: string
   description: string
   favori: boolean

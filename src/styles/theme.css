@@ -12,6 +12,15 @@
   --paper: #efe6d2;
   --paper-ink: #211a12;
 
+  /* Réservées aux graphiques (camembert, histogrammes) : accordées au thème bleu nuit/or,
+     mais plus différenciées que --brass/--brass-hi/--brass-lo seules pour rester lisibles
+     quand plusieurs salles doivent être distinguées d'un coup d'œil. */
+  --chart-1: #e8cc8c;
+  --chart-2: #4a5f85;
+  --chart-3: #c9a45c;
+  --chart-4: #7a9cc6;
+  --chart-5: #8a6a2e;
+
   --font-display: 'Sora', system-ui, sans-serif;
   --font-body: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-hand: 'Caveat', 'Segoe Script', 'Bradley Hand', cursive;

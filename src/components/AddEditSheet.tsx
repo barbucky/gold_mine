@@ -6,7 +6,7 @@ import { creerSalle } from '../db/salles'
 import { importerPhoto } from '../db/photos'
 import { useReducedMotion } from '../lib/useReducedMotion'
 import { prochainNumeroRomain } from '../lib/romain'
-import type { ChampPersonnalise, ValeurChamp } from '../db/types'
+import type { ChampPersonnalise, ValeurChamp, ValeurProgression } from '../db/types'
 
 export type AddEditSheetHandle = {
   openForNew: (opener: HTMLElement | null) => void
@@ -22,13 +22,22 @@ type EtatFormulaire = {
   marque: string
   salleId: number | null
   dateAffichee: string
+  anneeCreation: string
   achatMois: string
   achatAnnee: string
+  achatAnneeFin: string
   prixAchat: string
   prixRevente: string
   provenance: string
+  reference: string
   description: string
   details: Record<string, ValeurChamp>
+}
+
+/** « Circa 1956 » à partir de l'année de création, ou de l'année d'achat à défaut. */
+function genererDateAffichee(anneeCreation: string, achatAnnee: string): string {
+  const annee = anneeCreation || achatAnnee
+  return annee ? `Circa ${annee}` : ''
 }
 
 const FORMULAIRE_VIDE: EtatFormulaire = {
@@ -36,11 +45,14 @@ const FORMULAIRE_VIDE: EtatFormulaire = {
   marque: '',
   salleId: null,
   dateAffichee: '',
+  anneeCreation: '',
   achatMois: '',
   achatAnnee: '',
+  achatAnneeFin: '',
   prixAchat: '',
   prixRevente: '',
   provenance: '',
+  reference: '',
   description: '',
   details: {},
 }
@@ -56,6 +68,9 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
   const [nouvelleSalleNom, setNouvelleSalleNom] = useState('')
   const [erreur, setErreur] = useState<string | null>(null)
   const [enregistrement, setEnregistrement] = useState(false)
+  // Tant que la date affichée n'a pas été modifiée à la main, elle suit automatiquement
+  // l'année de création (ou d'achat à défaut) — voir genererDateAffichee.
+  const [dateAfficheeAuto, setDateAfficheeAuto] = useState(true)
   const reducedMotion = useReducedMotion()
 
   const overlayRef = useRef<HTMLDivElement>(null)
@@ -74,6 +89,7 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
     setNouvelleSalleNumero('')
     setNouvelleSalleNom('')
     setErreur(null)
+    setDateAfficheeAuto(true)
   }
 
   function openForNew(opener: HTMLElement | null) {
@@ -94,22 +110,28 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
     openerRef.current = opener
     setMode('edit')
     setObjetId(id)
+    const anneeCreation = objet.anneeCreation?.toString() ?? ''
+    const achatAnnee = objet.achatAnnee?.toString() ?? ''
     setForm({
       nom: objet.nom,
       marque: objet.marque,
       salleId: objet.salleId,
       dateAffichee: objet.dateAffichee,
+      anneeCreation,
       achatMois: objet.achatMois?.toString() ?? '',
-      achatAnnee: objet.achatAnnee?.toString() ?? '',
+      achatAnnee,
+      achatAnneeFin: objet.achatAnneeFin?.toString() ?? '',
       prixAchat: (objet.prixAchat / 100).toString(),
       prixRevente: objet.prixRevente != null ? (objet.prixRevente / 100).toString() : '',
       provenance: objet.provenance,
+      reference: objet.reference ?? '',
       description: objet.description,
       details: objet.details,
     })
     setPhotoFile(null)
     setSalleDialogOuvert(false)
     setErreur(null)
+    setDateAfficheeAuto(objet.dateAffichee === genererDateAffichee(anneeCreation, achatAnnee))
     setVisible(true)
   }
 
@@ -170,10 +192,15 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
     setForm((f) => ({ ...f, details: { ...f.details, [nomChamp]: valeur } }))
   }
 
-  function definirValeurProgression(nomChamp: string, cle: 'actuel' | 'total', valeur: number) {
+  function valeurProgressionDe(nomChamp: string): ValeurProgression {
+    const existante = form.details[nomChamp]
+    return typeof existante === 'object' && 'du' in existante ? existante : { du: 1, au: 1, complet: false }
+  }
+
+  function definirValeurProgression(nomChamp: string, cle: 'du' | 'au' | 'complet', valeur: number | boolean) {
     setForm((f) => {
       const existante = f.details[nomChamp]
-      const base = typeof existante === 'object' ? existante : { actuel: 0, total: 0 }
+      const base = typeof existante === 'object' && 'du' in existante ? existante : { du: 1, au: 1, complet: false }
       return { ...f, details: { ...f.details, [nomChamp]: { ...base, [cle]: valeur } } }
     })
   }
@@ -197,11 +224,14 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
         nom: form.nom.trim(),
         marque: form.marque.trim(),
         dateAffichee: form.dateAffichee.trim(),
+        anneeCreation: form.anneeCreation ? Number(form.anneeCreation) : undefined,
         achatMois: form.achatMois ? Number(form.achatMois) : undefined,
         achatAnnee: form.achatAnnee ? Number(form.achatAnnee) : undefined,
+        achatAnneeFin: form.achatAnneeFin ? Number(form.achatAnneeFin) : undefined,
         prixAchat: prixAchatCentimes,
         prixRevente: prixReventeCentimes,
         provenance: form.provenance.trim(),
+        reference: form.reference.trim() || undefined,
         description: form.description.trim(),
         details: form.details,
       }
@@ -286,14 +316,35 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
             </select>
           </div>
 
-          <div className="field">
-            <label htmlFor="fDate">Date affichée</label>
-            <input
-              id="fDate"
-              placeholder="Circa 1956"
-              value={form.dateAffichee}
-              onChange={(e) => setForm((f) => ({ ...f, dateAffichee: e.target.value }))}
-            />
+          <div className="row2">
+            <div className="field">
+              <label htmlFor="fDate">Date affichée</label>
+              <input
+                id="fDate"
+                placeholder="Circa 1956"
+                value={form.dateAffichee}
+                onChange={(e) => {
+                  setDateAfficheeAuto(false)
+                  setForm((f) => ({ ...f, dateAffichee: e.target.value }))
+                }}
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="fAnneeCreation">Année de création</label>
+              <input
+                id="fAnneeCreation"
+                type="number"
+                value={form.anneeCreation}
+                onChange={(e) => {
+                  const anneeCreation = e.target.value
+                  setForm((f) => ({
+                    ...f,
+                    anneeCreation,
+                    dateAffichee: dateAfficheeAuto ? genererDateAffichee(anneeCreation, f.achatAnnee) : f.dateAffichee,
+                  }))
+                }}
+              />
+            </div>
           </div>
 
           <div className="row2">
@@ -310,8 +361,31 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
             </div>
             <div className="field">
               <label htmlFor="fAnnee">Année d&rsquo;achat</label>
-              <input id="fAnnee" type="number" value={form.achatAnnee} onChange={(e) => setForm((f) => ({ ...f, achatAnnee: e.target.value }))} />
+              <input
+                id="fAnnee"
+                type="number"
+                value={form.achatAnnee}
+                onChange={(e) => {
+                  const achatAnnee = e.target.value
+                  setForm((f) => ({
+                    ...f,
+                    achatAnnee,
+                    dateAffichee: dateAfficheeAuto ? genererDateAffichee(f.anneeCreation, achatAnnee) : f.dateAffichee,
+                  }))
+                }}
+              />
             </div>
+          </div>
+
+          <div className="field">
+            <label htmlFor="fAnneeFin">Dernière année d&rsquo;achat (optionnel)</label>
+            <input
+              id="fAnneeFin"
+              type="number"
+              value={form.achatAnneeFin}
+              onChange={(e) => setForm((f) => ({ ...f, achatAnneeFin: e.target.value }))}
+            />
+            <p className="note">Si l&rsquo;achat s&rsquo;est étalé sur plusieurs années (ex. série complétée entre 2020 et 2024) : la valeur est répartie entre les deux années dans les statistiques.</p>
           </div>
 
           <div className="row2">
@@ -344,6 +418,11 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
           </div>
 
           <div className="field">
+            <label htmlFor="fReference">Référence</label>
+            <input id="fReference" value={form.reference} onChange={(e) => setForm((f) => ({ ...f, reference: e.target.value }))} />
+          </div>
+
+          <div className="field">
             <label htmlFor="fNote">Notes</label>
             <textarea id="fNote" value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
           </div>
@@ -358,22 +437,33 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
                   onChange={(e) => definirValeurTexte(champ.nom, e.target.value)}
                 />
               ) : (
-                <div className="row2">
-                  <input
-                    type="number"
-                    placeholder="Actuel"
-                    aria-label={`${champ.nom} — actuel`}
-                    value={typeof form.details[champ.nom] === 'object' ? (form.details[champ.nom] as { actuel: number }).actuel : ''}
-                    onChange={(e) => definirValeurProgression(champ.nom, 'actuel', Number(e.target.value))}
-                  />
-                  <input
-                    type="number"
-                    placeholder="Total"
-                    aria-label={`${champ.nom} — total`}
-                    value={typeof form.details[champ.nom] === 'object' ? (form.details[champ.nom] as { total: number }).total : ''}
-                    onChange={(e) => definirValeurProgression(champ.nom, 'total', Number(e.target.value))}
-                  />
-                </div>
+                <>
+                  <div className="row2">
+                    <input
+                      type="number"
+                      placeholder="Du tome n°"
+                      aria-label={`${champ.nom} — du tome n°`}
+                      value={valeurProgressionDe(champ.nom).du}
+                      onChange={(e) => definirValeurProgression(champ.nom, 'du', Number(e.target.value))}
+                    />
+                    <input
+                      type="number"
+                      placeholder="Au tome n°"
+                      aria-label={`${champ.nom} — au tome n°`}
+                      value={valeurProgressionDe(champ.nom).au}
+                      onChange={(e) => definirValeurProgression(champ.nom, 'au', Number(e.target.value))}
+                    />
+                  </div>
+                  <label className="switch-row">
+                    <span>Série complète</span>
+                    <input
+                      type="checkbox"
+                      role="switch"
+                      checked={valeurProgressionDe(champ.nom).complet}
+                      onChange={(e) => definirValeurProgression(champ.nom, 'complet', e.target.checked)}
+                    />
+                  </label>
+                </>
               )}
             </div>
           ))}

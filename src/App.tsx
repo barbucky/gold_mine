@@ -7,6 +7,7 @@ import { SharedSvgDefs } from './components/SharedSvgDefs'
 import { ObjectSheet, type ObjectSheetHandle } from './components/ObjectSheet'
 import { AddEditSheet, type AddEditSheetHandle } from './components/AddEditSheet'
 import { BackupSheet } from './components/BackupSheet'
+import { ManageSallesSheet } from './components/ManageSallesSheet'
 import { Intro } from './components/Intro'
 import { FLOORS } from './data/floors'
 import { useReducedMotion } from './lib/useReducedMotion'
@@ -22,6 +23,7 @@ function App() {
   const [toast, setToast] = useState<string | null>(null)
   const [introVisible, setIntroVisible] = useState(true)
   const [backupOuvert, setBackupOuvert] = useState(false)
+  const [gestionSallesOuverte, setGestionSallesOuverte] = useState(false)
   const elevatorRef = useRef<ElevatorHandle>(null)
   const objectSheetRef = useRef<ObjectSheetHandle>(null)
   const addEditRef = useRef<AddEditSheetHandle>(null)
@@ -63,7 +65,7 @@ function App() {
       case 0:
         return <Home onSeeAll={() => goTo(1)} onOpenObjet={openObjet} onOpenBackup={() => setBackupOuvert(true)} />
       case 1:
-        return <Collections onOpenObjet={openObjet} onToast={setToast} />
+        return <Collections onOpenObjet={openObjet} onOpenGestionSalles={() => setGestionSallesOuverte(true)} />
       default:
         return <Stats />
     }
@@ -83,6 +85,7 @@ function App() {
       <ObjectSheet ref={objectSheetRef} onToast={setToast} onEdit={editObjet} />
       <AddEditSheet ref={addEditRef} onToast={setToast} />
       <BackupSheet open={backupOuvert} onClose={() => setBackupOuvert(false)} onToast={setToast} />
+      <ManageSallesSheet open={gestionSallesOuverte} onClose={() => setGestionSallesOuverte(false)} onToast={setToast} />
       {introVisible && <Intro onFinished={() => setIntroVisible(false)} />}
     </div>
   )

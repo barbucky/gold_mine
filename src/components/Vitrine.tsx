@@ -4,10 +4,12 @@ import { useObjectUrl } from '../lib/useObjectUrl'
 
 type VitrineProps = {
   objetId?: number
+  /** Série complète (champ personnalisé « progression ») : affiche un ruban doré dans l'angle. */
+  complet?: boolean
 }
 
 /** Vignette sous vitre (specs.md § 2). Affiche la miniature si une photo a été importée. */
-export function Vitrine({ objetId }: VitrineProps) {
+export function Vitrine({ objetId, complet }: VitrineProps) {
   const photo = useLiveQuery(() => (objetId != null ? db.photos.where('objetId').equals(objetId).first() : undefined), [objetId])
   const url = useObjectUrl(photo?.miniature)
 
@@ -25,6 +27,14 @@ export function Vitrine({ objetId }: VitrineProps) {
       <polygon points="70,0 92,0 30,120 8,120" fill="#fff" opacity={0.05} />
       <rect x={0.5} y={0.5} width={119} height={119} fill="none" stroke="#fff" strokeOpacity={0.28} />
       <rect x={3.5} y={3.5} width={113} height={113} fill="none" stroke="#fff" strokeOpacity={0.07} />
+      {complet && (
+        <g transform="rotate(-45 21 21)">
+          <rect x={-60} y={12} width={160} height={20} fill="#c9a45c" stroke="#5d4519" strokeWidth={0.5} />
+          <text x={21} y={25.5} textAnchor="middle" fontFamily="Sora, sans-serif" fontWeight={700} fontSize={7.5} letterSpacing={0.3} fill="#1c1405">
+            COMPLETED
+          </text>
+        </g>
+      )}
     </svg>
   )
 }

@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/database'
 import { Vitrine } from '../components/Vitrine'
 import { obtenirDerniereSauvegarde } from '../lib/sauvegarde'
+import { trouverProgression, valeurAchat } from '../lib/valeurObjet'
 import type { Objet, Salle } from '../db/types'
 
 const euro = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
@@ -44,7 +45,7 @@ function RecentCard({ objet, salle, maintenant, onOpen }: RecentCardProps) {
       onClick={(e) => onOpen(e.currentTarget)}
     >
       <span className="vit">
-        <Vitrine objetId={objet.id} />
+        <Vitrine objetId={objet.id} complet={trouverProgression(objet, salle)?.complet} />
       </span>
       <span className="r-body">
         <span className="r-top">
@@ -53,7 +54,7 @@ function RecentCard({ objet, salle, maintenant, onOpen }: RecentCardProps) {
             <br />
             <span className="r-brand">{objet.marque}</span>
           </span>
-          <span className="r-price">{euro.format(objet.prixAchat / 100)}</span>
+          <span className="r-price">{euro.format(valeurAchat(objet, salle) / 100)}</span>
         </span>
         <span className="r-desc">{objet.description}</span>
         <span className="r-foot">

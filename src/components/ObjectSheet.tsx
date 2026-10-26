@@ -6,6 +6,8 @@ import { importerPhoto } from '../db/photos'
 import { Pedestal } from './Pedestal'
 import { FavoriteCoin } from './FavoriteCoin'
 import { useReducedMotion } from '../lib/useReducedMotion'
+import { trouverProgression, valeurAchat } from '../lib/valeurObjet'
+import type { ValeurProgression } from '../db/types'
 
 const euro = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
 
@@ -37,6 +39,9 @@ export const ObjectSheet = forwardRef<ObjectSheetHandle, ObjectSheetProps>(funct
 
   const objet = useLiveQuery(() => (objetId !== null ? db.objets.get(objetId) : undefined), [objetId])
   const salle = useLiveQuery(() => (objet ? db.salles.get(objet.salleId) : undefined), [objet])
+  const champProgression = salle?.champsPersonnalises.find((c) => c.type === 'progression')
+  const progression = objet && champProgression ? trouverProgression(objet, salle) : undefined
+  const champsTexte = salle?.champsPersonnalises.filter((c) => c.type === 'texte') ?? []
 
   function open(id: number, opener: HTMLElement | null) {
     // Annule toute animation de fermeture encore « figée » (fill: forwards) d'un cycle précédent,
@@ -114,6 +119,11 @@ export const ObjectSheet = forwardRef<ObjectSheetHandle, ObjectSheetProps>(funct
   async function toggleFavori() {
     if (!objet) return
     await modifierObjet(objet.id!, { favori: !objet.favori })
+  }
+
+  async function toggleSerieComplete(nomChamp: string, valeur: ValeurProgression, complet: boolean) {
+    if (!objet) return
+    await modifierObjet(objet.id!, { details: { ...objet.details, [nomChamp]: { ...valeur, complet } } })
   }
 
   async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -228,7 +238,7 @@ export const ObjectSheet = forwardRef<ObjectSheetHandle, ObjectSheetProps>(funct
 
             <div className="d-meta">
               <span className="it-date">{objet.dateAffichee}</span>
-              <span className="pill">{euro.format(objet.prixAchat / 100)}</span>
+              <span className="pill">{euro.format(valeurAchat(objet, salle) / 100)}</span>
             </div>
 
             <p className={`d-desc${descOuverte ? '' : ' clamp'}`} ref={descRef}>
@@ -256,13 +266,56 @@ export const ObjectSheet = forwardRef<ObjectSheetHandle, ObjectSheetProps>(funct
                   {salle ? `Salle ${salle.numero} · ${salle.nom}` : ''}
                 </dd>
               </div>
-              <div>
-                <dt>Inventaire</dt>
-                <dd className="mono">Inv. {objet.inventaire}</dd>
-              </div>
+              {objet.anneeCreation != null && (
+                <div>
+                  <dt>Année de création</dt>
+                  <dd>{objet.anneeCreation}</dd>
+                </div>
+              )}
+              {champProgression && progression && (
+                <div>
+                  <dt>{champProgression.nom}</dt>
+                  <dd>
+                    <div className="fact-progression">
+                      <span>
+                        Tomes {progression.du} à {progression.au}
+                      </span>
+                      <label className="switch-row compact">
+                        <span>Série complète</span>
+                        <input
+                          type="checkbox"
+                          role="switch"
+                          checked={progression.complet}
+                          onChange={(e) => toggleSerieComplete(champProgression.nom, progression, e.target.checked)}
+                        />
+                      </label>
+                    </div>
+                  </dd>
+                </div>
+              )}
+              {objet.reference && (
+                <div>
+                  <dt>Référence</dt>
+                  <dd>{objet.reference}</dd>
+                </div>
+              )}
               <div>
                 <dt>Provenance</dt>
                 <dd>{objet.provenance}</dd>
+              </div>
+              {champsTexte.map((champ) => {
+                const valeur = objet.details[champ.nom]
+                if (typeof valeur !== 'string' || !valeur) return null
+                return (
+                  <div key={champ.nom}>
+                    <dt>{champ.nom}</dt>
+                    <dd>{valeur}</dd>
+                  </div>
+                )
+              })}
+              <div>
+                <dt>Inventaire</dt>
+                <dd className="mono">Inv. {objet.inventaire}</dd>
               </div>
             </dl>
           </div>

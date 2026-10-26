@@ -76,6 +76,10 @@ Thème unique sombre (pas de mode clair).
 
 &#x20;
 
+\*\*Variables réservées aux graphiques\*\* (étape 11, Statistiques) : `--chart-1` à `--chart-5`, pour différencier les salles dans le camembert et les histogrammes. Accordées au thème (dérivées du bleu nuit et de l'or) mais plus contrastées entre elles que `--brass`/`--brass-hi`/`--brass-lo` seules, pour rester lisibles quand plusieurs salles doivent être distinguées d'un coup d'œil. Non utilisées ailleurs que dans les graphiques — la légende (texte + %) reste la source d'information principale, la couleur n'est qu'un repère visuel secondaire.
+
+&#x20;
+
 \### Typographie
 
 &#x20;
@@ -362,11 +366,11 @@ reglages  cle, valeur   (son, introVue, derniereSauvegarde…)
 
 &#x20;
 
-\- \*\*Champs personnalisés par salle\*\* : chaque salle définit un gabarit de champs nommés et typés (ex. Club, Saison, Taille — type texte — pour une salle « Maillots » ; Auteur, Éditeur pour « Livres »). Le formulaire d'ajout lit ce gabarit et affiche le bon contrôle par champ ; la valeur saisie est stockée dans `details`, propre à chaque objet. Modifier le gabarit d'une salle ne touche pas rétroactivement les objets déjà créés — seulement les prochains ajouts/modifications.
+\- \*\*Champs personnalisés par salle\*\* : chaque salle définit un gabarit de champs nommés et typés (ex. Club, Saison, Taille — type texte — pour une salle « Maillots » ; Auteur, Éditeur pour « Livres »). Le formulaire d'ajout lit ce gabarit et affiche le bon contrôle par champ ; la valeur saisie est stockée dans `details`, propre à chaque objet. Modifier le gabarit d'une salle ne touche pas rétroactivement les objets déjà créés — seulement les prochains ajouts/modifications. Gabarit géré depuis « Gérer les salles » → « Champs » (ajout/suppression, étape 11).
 
 &#x20;
 
-\- \*\*Type « progression »\*\* : pour un champ comme « Volumes possédés » (ex. collection de mangas/comics par tomes). Au lieu d'un texte libre, deux nombres (`actuel`/`total`) ; affiché partout comme une barre de progression + « 6/25 », calculé automatiquement — pas de texte à interpréter.
+\- \*\*Type « progression »\*\* : pour un champ comme « Volumes possédés » (ex. collection de mangas/comics par tomes). Au lieu d'un texte libre, deux nombres (`actuel`/`total`). \*\*Multiplicateur de valeur (étape 11)\*\* : si la salle d'un objet définit un champ « progression », son prix d'achat et sa revente potentielle affichés partout (fiche, accueil, collections, statistiques) sont multipliés par le nombre de volumes possédés (`actuel`) — permet de n'entrer que le prix unitaire d'une série. Affichage d'une barre de progression dédiée dans la fiche : pas encore fait, \*\*\[à concevoir]\*\*.
 
 &#x20;
 

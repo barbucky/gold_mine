@@ -5,15 +5,16 @@ import { modifierObjet } from '../db/objets'
 import { chargerJeuDExemple } from '../db/seed'
 import { Vitrine } from '../components/Vitrine'
 import { FavoriteCoin } from '../components/FavoriteCoin'
-import { ManageSallesSheet } from '../components/ManageSallesSheet'
 import { useReducedMotion } from '../lib/useReducedMotion'
-import type { Objet } from '../db/types'
+import { OPTIONS_TRI, trierObjets, type TriCle } from '../lib/triObjets'
+import { trouverProgression, valeurAchat } from '../lib/valeurObjet'
+import type { Objet, Salle } from '../db/types'
 
 const euro = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
 
 type CollectionsProps = {
   onOpenObjet: (objetId: number, opener: HTMLElement | null) => void
-  onToast: (message: string) => void
+  onOpenGestionSalles: () => void
 }
 
 type StatsSalle = {
@@ -24,7 +25,7 @@ type StatsSalle = {
   totalPrixAchat: number
 }
 
-function calculerStats(objets: Objet[]): StatsSalle {
+function calculerStats(objets: Objet[], salle: Salle): StatsSalle {
   const annees = objets.map((o) => o.achatAnnee).filter((a): a is number => typeof a === 'number')
   const dernierAjout = objets.reduce<Objet | null>(
     (plusRecent, o) => (!plusRecent || o.creeLe > plusRecent.creeLe ? o : plusRecent),
@@ -35,13 +36,13 @@ function calculerStats(objets: Objet[]): StatsSalle {
     anneeMin: annees.length ? Math.min(...annees) : null,
     anneeMax: annees.length ? Math.max(...annees) : null,
     dernierAjout: dernierAjout && { nom: dernierAjout.nom, marque: dernierAjout.marque },
-    totalPrixAchat: objets.reduce((total, o) => total + o.prixAchat, 0),
+    totalPrixAchat: objets.reduce((total, o) => total + valeurAchat(o, salle), 0),
   }
 }
 
-export function Collections({ onOpenObjet, onToast }: CollectionsProps) {
+export function Collections({ onOpenObjet, onOpenGestionSalles }: CollectionsProps) {
   const [salleOuverteId, setSalleOuverteId] = useState<number | null>(null)
-  const [gestionSallesOuverte, setGestionSallesOuverte] = useState(false)
+  const [tri, setTri] = useState<TriCle>('recent')
   const reducedMotion = useReducedMotion()
   const estPremierRendu = useRef(true)
   const roomsRef = useRef<HTMLDivElement>(null)
@@ -53,7 +54,7 @@ export function Collections({ onOpenObjet, onToast }: CollectionsProps) {
   const statsParSalle = new Map<number, StatsSalle>()
   if (salles && objets) {
     for (const salle of salles) {
-      statsParSalle.set(salle.id!, calculerStats(objets.filter((o) => o.salleId === salle.id)))
+      statsParSalle.set(salle.id!, calculerStats(objets.filter((o) => o.salleId === salle.id), salle))
     }
   }
 
@@ -111,7 +112,7 @@ export function Collections({ onOpenObjet, onToast }: CollectionsProps) {
   }
 
   const salleOuverte = salles.find((s) => s.id === salleOuverteId) ?? null
-  const objetsDeLaSalle = salleOuverte ? objets.filter((o) => o.salleId === salleOuverte.id) : []
+  const objetsDeLaSalle = salleOuverte ? trierObjets(objets.filter((o) => o.salleId === salleOuverte.id), tri) : []
 
   return (
     <section className="floor">
@@ -119,7 +120,7 @@ export function Collections({ onOpenObjet, onToast }: CollectionsProps) {
         <div ref={roomsRef}>
           <div className="sec-head">
             <h1>Mes collections</h1>
-            <button className="link" type="button" onClick={() => setGestionSallesOuverte(true)}>
+            <button className="link" type="button" onClick={onOpenGestionSalles}>
               Gérer les salles
             </button>
           </div>
@@ -169,18 +170,28 @@ export function Collections({ onOpenObjet, onToast }: CollectionsProps) {
               {euro.format((statsParSalle.get(salleOuverte.id!)?.totalPrixAchat ?? 0) / 100)}
             </p>
           </div>
+          <div className="field">
+            <label htmlFor="triSelect">Trier par</label>
+            <select id="triSelect" value={tri} onChange={(e) => setTri(e.target.value as TriCle)}>
+              {OPTIONS_TRI.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
           <ul className="items">
             {objetsDeLaSalle.map((objet) => (
               <li className="item" key={objet.id}>
                 <button className="item-open" type="button" onClick={(e) => onOpenObjet(objet.id!, e.currentTarget)}>
                   <span className="vit">
-                    <Vitrine objetId={objet.id} />
+                    <Vitrine objetId={objet.id} complet={trouverProgression(objet, salleOuverte)?.complet} />
                   </span>
                   <span className="info">
                     <span className="it-title">{objet.nom}</span>
                     <span className="it-brand">{objet.marque}</span>
                     <span className="it-date">{objet.dateAffichee}</span>
-                    <span className="it-price">{euro.format(objet.prixAchat / 100)}</span>
+                    <span className="it-price">{euro.format(valeurAchat(objet, salleOuverte) / 100)}</span>
                   </span>
                 </button>
                 <FavoriteCoin
@@ -193,8 +204,6 @@ export function Collections({ onOpenObjet, onToast }: CollectionsProps) {
           </ul>
         </div>
       )}
-
-      <ManageSallesSheet open={gestionSallesOuverte} onClose={() => setGestionSallesOuverte(false)} onToast={onToast} />
     </section>
   )
 }
