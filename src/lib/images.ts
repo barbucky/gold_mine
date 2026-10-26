@@ -15,9 +15,9 @@ export function estHeic(file: File): boolean {
   return EXTENSIONS_HEIC.some((ext) => nom.endsWith(ext))
 }
 
-export function chargerImage(file: File): Promise<HTMLImageElement> {
+export function chargerImage(blob: Blob): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file)
+    const url = URL.createObjectURL(blob)
     const image = new Image()
     image.onload = () => {
       URL.revokeObjectURL(url)

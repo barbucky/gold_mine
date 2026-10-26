@@ -200,3 +200,39 @@ Format : \*\*décision\*\* — raison / précision. ❌ = option refusée.
 
 &#x20;
 
+\### Pièce de la porte (intro 3D) : réutilisation de l'icône de l'app (étape 8)
+
+&#x20;
+
+\- ❌ Dessin procédural d'origine de la maquette (monogramme « MC », grènetis, couronne de laurier, millésime « MMXXVI », étoile, texture + bump map générées séparément) : complexe à maintenir, et une pièce différente de celle utilisée partout ailleurs dans l'app.
+
+\- \*\*Réutilisation du dessin de l'icône de l'app\*\* (médaillon doré, monogramme « M ») pour la pièce de la porte : une seule pièce cohérente dans toute l'app (icône, favori, intro). Texture dédiée régénérée à plus haute résolution (1024 px) à partir du même script `scripts/generate-icons.mjs`. Le split en deux moitiés à l'ouverture de la porte reste inchangé (c'est géométrique, indépendant du dessin).
+
+&#x20;
+
+\### Éclairage et timing de l'intro 3D, ajustés avec l'utilisateur (étape 8)
+
+&#x20;
+
+\- \*\*Intensités des lumières relevées très au-dessus des valeurs de la maquette\*\* (ex. lampe du vestibule : 0,9 → 95) : Three.js récent calcule l'éclairage de façon physique (candela), contrairement à la version r128 utilisée par la maquette — les anciennes valeurs rendaient la scène quasi noire. Ajusté par itérations successives avec retour visuel de l'utilisateur (je ne peux pas tester le rendu WebGL moi-même).
+
+\- \*\*Pause de 0,35 s ajoutée avant l'ouverture de la porte\*\* (vestibule fermé visible plus longtemps) : préférence utilisateur.
+
+\- \*\*Trajet de la caméra ralenti en deux temps\*\* (2,9 s → 4,4 s → 7 s) une fois les 8 vitrines ajoutées (phase B) : à vitesse d'origine, pas assez de temps pour distinguer une vitrine au passage. Cadence de l'oscillation de marche compensée pour rester naturelle malgré le trajet plus long. Durée totale de l'intro passée à ≈ 7,5 s (specs.md § 4.1 mis à jour).
+
+\- \*\*Lumières de vitrine renforcées\*\* (intensité 18 → 55) : quatre `PointLight` déjà positionnées exactement aux coordonnées des paires de vitrines — renforcées plutôt que d'en ajouter de nouvelles (coût de performance moindre). Pas de géométrie de source visible : cohérent avec le refus du faisceau/de la rampe lumineuse au-dessus des vitrines (maquette).
+
+\- ❌ Sous-titre « Collections particulières » sous le titre de l'intro (présent dans la maquette) : jugé inutile, retiré.
+
+&#x20;
+
+\### Champs personnalisés typés : type « progression » (avant étape 9)
+
+&#x20;
+
+\- ❌ Parser du texte libre (ex. « 1-6, 9 / 25 ») pour en tirer un pourcentage : fragile, aucun format fiable à interpréter.
+
+\- \*\*Chaque champ personnalisé a désormais un type\*\* (`texte` ou `progression`), pas seulement un nom. Un champ `progression` stocke deux nombres (`actuel`, `total`) au lieu d'un texte, et s'affiche comme une vraie barre de progression (ex. « Volumes possédés » d'une collection de mangas : 6/25). Décidé avant de construire le formulaire d'ajout (étape 9) pour ne pas avoir à le refaire.
+
+&#x20;
+

@@ -5,6 +5,7 @@ import { Elevator, type ElevatorHandle } from './components/Elevator'
 import { AddButton } from './components/AddButton'
 import { SharedSvgDefs } from './components/SharedSvgDefs'
 import { ObjectSheet, type ObjectSheetHandle } from './components/ObjectSheet'
+import { Intro } from './components/Intro'
 import { FLOORS } from './data/floors'
 import { useReducedMotion } from './lib/useReducedMotion'
 import { Home } from './floors/Home'
@@ -17,6 +18,7 @@ function App() {
   const [current, setCurrent] = useState(0)
   const [busy, setBusy] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
+  const [introVisible, setIntroVisible] = useState(true)
   const elevatorRef = useRef<ElevatorHandle>(null)
   const objectSheetRef = useRef<ObjectSheetHandle>(null)
   const mainRef = useRef<HTMLElement>(null)
@@ -51,7 +53,7 @@ function App() {
   function renderFloor() {
     switch (current) {
       case 0:
-        return <Home />
+        return <Home onSeeAll={() => goTo(1)} onOpenObjet={openObjet} />
       case 1:
         return <Collections onOpenObjet={openObjet} />
       default:
@@ -62,7 +64,7 @@ function App() {
   return (
     <div className="app">
       <SharedSvgDefs />
-      <Header floor={FLOORS[current]} />
+      <Header floor={FLOORS[current]} onReplayIntro={() => setIntroVisible(true)} />
       <main className="app-main" ref={mainRef}>
         {renderFloor()}
       </main>
@@ -71,6 +73,7 @@ function App() {
       <ElevatorPanel current={current} disabled={busy} onGo={goTo} />
       <Elevator ref={elevatorRef} />
       <ObjectSheet ref={objectSheetRef} onToast={setToast} />
+      {introVisible && <Intro onFinished={() => setIntroVisible(false)} />}
     </div>
   )
 }

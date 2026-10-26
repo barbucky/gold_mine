@@ -1,11 +1,21 @@
+export type TypeChamp = 'texte' | 'progression'
+
+export type ChampPersonnalise = {
+  nom: string
+  type: TypeChamp
+}
+
+/** Valeur d'un champ personnalisé : texte libre, ou progression (ex. volumes possédés). */
+export type ValeurChamp = string | { actuel: number; total: number }
+
 export type Salle = {
   id?: number
   numero: string // "I", "II"…
   nom: string
   ordre: number
   creeLe: Date
-  /** Gabarit de noms de champs proposés à l'ajout d'un objet de cette salle. */
-  champsPersonnalises: string[]
+  /** Gabarit de champs proposés à l'ajout d'un objet de cette salle. */
+  champsPersonnalises: ChampPersonnalise[]
 }
 
 export type Objet = {
@@ -28,7 +38,7 @@ export type Objet = {
   creeLe: Date
   modifieLe: Date
   /** Champs personnalisés propres à cet objet (clé → valeur). */
-  details: Record<string, string>
+  details: Record<string, ValeurChamp>
 }
 
 export type Photo = {

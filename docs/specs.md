@@ -194,19 +194,19 @@ Base de la maquette : champs Nom, Marque, Salle, Mois, Année, Provenance, Notes
 
 &#x20;
 
-Durée ≈ 3,5 s. Un tap ou une touche (Entrée, Espace, Échap) la passe à tout moment (fondu de 260 ms).
+Durée ≈ 7,5 s (hors fondu de sortie) — allongée pour laisser le temps de distinguer les vitrines au passage. Un tap ou une touche (Entrée, Espace, Échap) la passe à tout moment (fondu de 260 ms).
 
 &#x20;
 
 \*\*Séquence :\*\*
 
-\- 0 – 0,25 s : vestibule sombre, double porte en noyer sous une plaque en laiton gravée « Mc's Gold Mine ». Titre « MC'S GOLD MINE » et « Touchez pour entrer » en surimpression.
+\- 0 – 0,6 s : vestibule sombre, double porte en noyer sous une plaque en laiton gravée « Mc's Gold Mine ». Titre « MC'S GOLD MINE » et « Touchez pour entrer » en surimpression. Pause volontairement un peu plus longue devant la porte fermée avant qu'elle ne s'ouvre.
 
-\- 0,25 – 1,3 s : les deux battants s'ouvrent vers l'intérieur. \*\*Une pièce d'or « MC » en relief est fixée à cheval sur les deux battants : elle se coupe en deux, chaque moitié part avec son battant.\*\*
+\- 0,6 – 1,65 s : les deux battants s'ouvrent vers l'intérieur. \*\*Une pièce d'or en relief (icône de l'app, § 2) est fixée à cheval sur les deux battants : elle se coupe en deux, chaque moitié part avec son battant.\*\*
 
-\- 0,5 – 3,4 s : la caméra avance dans l'allée (légère oscillation de marche).
+\- 0,85 – 7,85 s : la caméra avance dans l'allée, ralentie pour bien voir les 8 vitrines au passage (légère oscillation de marche, à la même cadence réelle qu'avant malgré le trajet allongé).
 
-\- À partir de 3,1 s : fondu vers l'accueil (650 ms).
+\- À partir de 7,55 s : fondu vers l'accueil (650 ms).
 
 \*\*Décor :\*\*
 
@@ -218,7 +218,7 @@ Durée ≈ 3,5 s. Un tap ou une touche (Entrée, Espace, Échap) la passe à tou
 
 \- Tableaux de paysage à cadre doré sur les deux murs, grand tableau au fond.
 
-\- \*\*Pièce de la porte\*\* : rayon ≈ 0,58 m, épaisseur, tranche dorée, relief (bump map) ; monogramme « MC », grènetis, couronne de laurier, millésime « MMXXVI », étoile. Texture nette et contrastée (1024 px minimum).
+\- \*\*Pièce de la porte\*\* : rayon ≈ 0,58 m, épaisseur, tranche dorée. Réutilise le dessin de l'icône de l'app (§ 2, médaillon doré en relief, monogramme « M »), pour une seule pièce cohérente dans toute l'app — pas le dessin procédural (MC, laurier, millésime, étoile) d'origine. Texture dédiée régénérée à 1024 px minimum (le relief vient du dégradé peint dans la texture, pas d'une bump map séparée).
 
 \*\*Vitrines (8, alternées gauche/droite) :\*\*
 
@@ -246,7 +246,7 @@ Bouton « Rejouer l'intro » dans l'en-tête.
 
 \- Date du jour (« Dimanche 25 octobre ») puis grand titre « Bonjour » / « Bonsoir » (bonsoir de 18 h à 5 h).
 
-\- Trois tuiles de chiffres clés : nombre d'objets, nombre de salles, ajouts ce mois-ci. \*(contenu des tuiles : \[à concevoir])\*
+\- Trois tuiles de chiffres clés : nombre d'objets, nombre de salles (libellé affiché : « collections »), ajouts ce mois-ci. \*(contenu des tuiles : \[à concevoir])\*
 
 \- Section « Dernières acquisitions » + lien « Tout voir » (→ ascenseur vers l'étage 1).
 
@@ -336,7 +336,9 @@ Stockage local IndexedDB (Dexie.js). Aucune donnée ne quitte le téléphone. De
 
 salles    id, numero ("I", "II"…), nom, ordre, creeLe,
 
-&#x20;         champsPersonnalises (string\[], ex. \["Club","Saison","Taille"])
+&#x20;         champsPersonnalises ({nom, type: "texte"|"progression"}\[],
+
+&#x20;         ex. \[{nom:"Club",type:"texte"}, {nom:"Volumes",type:"progression"}])
 
 objets    id, salleId, nom, marque, dateAffichee ("Circa 1956"),
 
@@ -346,7 +348,9 @@ objets    id, salleId, nom, marque, dateAffichee ("Circa 1956"),
 
 &#x20;         provenance, inventaire ("2026.118"), description, favori (bool),
 
-&#x20;         creeLe, modifieLe, details (Record<string,string>, ex. {"Club":"PSG","Saison":"2023-2024"})
+&#x20;         creeLe, modifieLe, details (par champ : string si "texte",
+
+&#x20;         {actuel, total} si "progression" — ex. {"Club":"PSG", "Volumes":{"actuel":6,"total":25}})
 
 photos    id, objetId, originale (Blob), detouree (Blob | null), miniature (Blob),
 
@@ -358,7 +362,11 @@ reglages  cle, valeur   (son, introVue, derniereSauvegarde…)
 
 &#x20;
 
-\- \*\*Champs personnalisés par salle\*\* : chaque salle définit un gabarit de noms de champs (ex. Club, Saison, Taille pour une salle « Maillots » ; Auteur, Éditeur, Pages pour une salle « Livres »). Le formulaire d'ajout lit ce gabarit et affiche un champ texte par nom défini ; la valeur saisie est stockée dans `details`, propre à chaque objet. Modifier le gabarit d'une salle ne touche pas rétroactivement les objets déjà créés — seulement les prochains ajouts/modifications.
+\- \*\*Champs personnalisés par salle\*\* : chaque salle définit un gabarit de champs nommés et typés (ex. Club, Saison, Taille — type texte — pour une salle « Maillots » ; Auteur, Éditeur pour « Livres »). Le formulaire d'ajout lit ce gabarit et affiche le bon contrôle par champ ; la valeur saisie est stockée dans `details`, propre à chaque objet. Modifier le gabarit d'une salle ne touche pas rétroactivement les objets déjà créés — seulement les prochains ajouts/modifications.
+
+&#x20;
+
+\- \*\*Type « progression »\*\* : pour un champ comme « Volumes possédés » (ex. collection de mangas/comics par tomes). Au lieu d'un texte libre, deux nombres (`actuel`/`total`) ; affiché partout comme une barre de progression + « 6/25 », calculé automatiquement — pas de texte à interpréter.
 
 &#x20;
 

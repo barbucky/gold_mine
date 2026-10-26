@@ -78,3 +78,5 @@ render(svg, 512, 'public/pwa-512.png')
 render(svg, 180, 'public/apple-touch-icon.png')
 render(svg, 32, 'public/favicon-32.png')
 render(maskableSvg, 512, 'public/pwa-maskable-512.png')
+// Texture 3D (intro) : même dessin, en plus haute résolution pour un rendu net de près (specs.md § 4.1).
+render(svg, 1024, 'public/coin-texture-1024.png')
