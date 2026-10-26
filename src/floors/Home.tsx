@@ -2,14 +2,17 @@ import { useMemo } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/database'
 import { Vitrine } from '../components/Vitrine'
+import { obtenirDerniereSauvegarde } from '../lib/sauvegarde'
 import type { Objet, Salle } from '../db/types'
 
 const euro = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
 const NB_RECENTS = 3
+const RAPPEL_SAUVEGARDE_JOURS = 30
 
 type HomeProps = {
   onSeeAll: () => void
   onOpenObjet: (objetId: number, opener: HTMLElement | null) => void
+  onOpenBackup: () => void
 }
 
 function formatAnciennete(date: Date, maintenant: Date): string {
@@ -63,12 +66,13 @@ function RecentCard({ objet, salle, maintenant, onOpen }: RecentCardProps) {
   )
 }
 
-export function Home({ onSeeAll, onOpenObjet }: HomeProps) {
+export function Home({ onSeeAll, onOpenObjet, onOpenBackup }: HomeProps) {
   // Calculé une fois par affichage de l'étage (le composant est remonté à chaque retour sur Accueil).
   // oxlint-disable-next-line react/purity -- heure/date volontairement lues au rendu, figées via useMemo
   const maintenant = useMemo(() => new Date(), [])
   const salles = useLiveQuery(() => db.salles.toArray())
   const objets = useLiveQuery(() => db.objets.toArray())
+  const derniereSauvegarde = useLiveQuery(() => obtenirDerniereSauvegarde())
 
   if (!salles || !objets) {
     return (
@@ -88,12 +92,24 @@ export function Home({ onSeeAll, onOpenObjet }: HomeProps) {
   const sallesParId = new Map(salles.map((s) => [s.id, s]))
   const recents = [...objets].sort((a, b) => b.creeLe.getTime() - a.creeLe.getTime()).slice(0, NB_RECENTS)
 
+  const joursDepuisSauvegarde = derniereSauvegarde ? Math.floor((maintenant.getTime() - derniereSauvegarde.getTime()) / 86_400_000) : null
+  const rappelSauvegarde = objets.length > 0 && (joursDepuisSauvegarde === null || joursDepuisSauvegarde > RAPPEL_SAUVEGARDE_JOURS)
+
   return (
     <section className="floor home">
       <div className="hello">
         <div className="hello-date">{dateDuJour}</div>
         <h1>{salutation}</h1>
       </div>
+
+      {rappelSauvegarde && (
+        <p className="note">
+          {joursDepuisSauvegarde === null ? 'Aucune sauvegarde pour l’instant.' : `Dernière sauvegarde il y a ${joursDepuisSauvegarde} jours.`}{' '}
+          <button className="link" type="button" onClick={onOpenBackup}>
+            Sauvegarder maintenant
+          </button>
+        </p>
+      )}
 
       <div className="kpis">
         <div className="kpi">

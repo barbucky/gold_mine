@@ -1175,3 +1175,19 @@ form {
   gap: 8px;
   flex-wrap: wrap;
 }
+
+/* ---------- Sauvegarde ---------- */
+.backup-section {
+  display: grid;
+  gap: 8px;
+  padding-block: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.backup-section h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 15px;
+  color: #fff;
+}

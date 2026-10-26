@@ -6,6 +6,7 @@ import { AddButton } from './components/AddButton'
 import { SharedSvgDefs } from './components/SharedSvgDefs'
 import { ObjectSheet, type ObjectSheetHandle } from './components/ObjectSheet'
 import { AddEditSheet, type AddEditSheetHandle } from './components/AddEditSheet'
+import { BackupSheet } from './components/BackupSheet'
 import { Intro } from './components/Intro'
 import { FLOORS } from './data/floors'
 import { useReducedMotion } from './lib/useReducedMotion'
@@ -20,6 +21,7 @@ function App() {
   const [busy, setBusy] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const [introVisible, setIntroVisible] = useState(true)
+  const [backupOuvert, setBackupOuvert] = useState(false)
   const elevatorRef = useRef<ElevatorHandle>(null)
   const objectSheetRef = useRef<ObjectSheetHandle>(null)
   const addEditRef = useRef<AddEditSheetHandle>(null)
@@ -59,7 +61,7 @@ function App() {
   function renderFloor() {
     switch (current) {
       case 0:
-        return <Home onSeeAll={() => goTo(1)} onOpenObjet={openObjet} />
+        return <Home onSeeAll={() => goTo(1)} onOpenObjet={openObjet} onOpenBackup={() => setBackupOuvert(true)} />
       case 1:
         return <Collections onOpenObjet={openObjet} onToast={setToast} />
       default:
@@ -70,7 +72,7 @@ function App() {
   return (
     <div className="app">
       <SharedSvgDefs />
-      <Header floor={FLOORS[current]} onReplayIntro={() => setIntroVisible(true)} />
+      <Header floor={FLOORS[current]} onReplayIntro={() => setIntroVisible(true)} onOpenBackup={() => setBackupOuvert(true)} />
       <main className="app-main" ref={mainRef}>
         {renderFloor()}
       </main>
@@ -80,6 +82,7 @@ function App() {
       <Elevator ref={elevatorRef} />
       <ObjectSheet ref={objectSheetRef} onToast={setToast} onEdit={editObjet} />
       <AddEditSheet ref={addEditRef} onToast={setToast} />
+      <BackupSheet open={backupOuvert} onClose={() => setBackupOuvert(false)} onToast={setToast} />
       {introVisible && <Intro onFinished={() => setIntroVisible(false)} />}
     </div>
   )
