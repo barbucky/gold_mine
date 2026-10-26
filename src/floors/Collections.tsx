@@ -5,6 +5,7 @@ import { modifierObjet } from '../db/objets'
 import { chargerJeuDExemple } from '../db/seed'
 import { Vitrine } from '../components/Vitrine'
 import { FavoriteCoin } from '../components/FavoriteCoin'
+import { ManageSallesSheet } from '../components/ManageSallesSheet'
 import { useReducedMotion } from '../lib/useReducedMotion'
 import type { Objet } from '../db/types'
 
@@ -12,6 +13,7 @@ const euro = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR'
 
 type CollectionsProps = {
   onOpenObjet: (objetId: number, opener: HTMLElement | null) => void
+  onToast: (message: string) => void
 }
 
 type StatsSalle = {
@@ -19,7 +21,7 @@ type StatsSalle = {
   anneeMin: number | null
   anneeMax: number | null
   dernierAjout: { nom: string; marque: string } | null
-  valeurEstimee: number
+  totalPrixAchat: number
 }
 
 function calculerStats(objets: Objet[]): StatsSalle {
@@ -33,12 +35,13 @@ function calculerStats(objets: Objet[]): StatsSalle {
     anneeMin: annees.length ? Math.min(...annees) : null,
     anneeMax: annees.length ? Math.max(...annees) : null,
     dernierAjout: dernierAjout && { nom: dernierAjout.nom, marque: dernierAjout.marque },
-    valeurEstimee: objets.reduce((total, o) => total + (o.prixRevente ?? o.prixAchat), 0),
+    totalPrixAchat: objets.reduce((total, o) => total + o.prixAchat, 0),
   }
 }
 
-export function Collections({ onOpenObjet }: CollectionsProps) {
+export function Collections({ onOpenObjet, onToast }: CollectionsProps) {
   const [salleOuverteId, setSalleOuverteId] = useState<number | null>(null)
+  const [gestionSallesOuverte, setGestionSallesOuverte] = useState(false)
   const reducedMotion = useReducedMotion()
   const estPremierRendu = useRef(true)
   const roomsRef = useRef<HTMLDivElement>(null)
@@ -114,7 +117,12 @@ export function Collections({ onOpenObjet }: CollectionsProps) {
     <section className="floor">
       {!salleOuverte && (
         <div ref={roomsRef}>
-          <h1>Mes collections</h1>
+          <div className="sec-head">
+            <h1>Mes collections</h1>
+            <button className="link" type="button" onClick={() => setGestionSallesOuverte(true)}>
+              Gérer les salles
+            </button>
+          </div>
           <div className="rooms">
             {salles.map((salle) => {
               const stats = statsParSalle.get(salle.id!)
@@ -157,8 +165,8 @@ export function Collections({ onOpenObjet }: CollectionsProps) {
             <div className="eyebrow">Salle {salleOuverte.numero}</div>
             <h1>{salleOuverte.nom}</h1>
             <p className="room-sub">
-              {objetsDeLaSalle.length} objet{objetsDeLaSalle.length > 1 ? 's' : ''} · valeur estimée{' '}
-              {euro.format((statsParSalle.get(salleOuverte.id!)?.valeurEstimee ?? 0) / 100)}
+              {objetsDeLaSalle.length} objet{objetsDeLaSalle.length > 1 ? 's' : ''} ·{' '}
+              {euro.format((statsParSalle.get(salleOuverte.id!)?.totalPrixAchat ?? 0) / 100)}
             </p>
           </div>
           <ul className="items">
@@ -172,7 +180,7 @@ export function Collections({ onOpenObjet }: CollectionsProps) {
                     <span className="it-title">{objet.nom}</span>
                     <span className="it-brand">{objet.marque}</span>
                     <span className="it-date">{objet.dateAffichee}</span>
-                    <span className="it-price">{euro.format((objet.prixRevente ?? objet.prixAchat) / 100)}</span>
+                    <span className="it-price">{euro.format(objet.prixAchat / 100)}</span>
                   </span>
                 </button>
                 <FavoriteCoin
@@ -185,6 +193,8 @@ export function Collections({ onOpenObjet }: CollectionsProps) {
           </ul>
         </div>
       )}
+
+      <ManageSallesSheet open={gestionSallesOuverte} onClose={() => setGestionSallesOuverte(false)} onToast={onToast} />
     </section>
   )
 }

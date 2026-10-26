@@ -178,7 +178,7 @@ Pas d'étage dédié : un bouton rond doré flottant, visible sur tous les étag
 
 Base de la maquette : champs Nom, Marque, Salle, Mois, Année, Provenance, Notes, Photo ; bouton « Inventorier ».
 
-À compléter : prix d'achat, prix max à la revente, date d'acquisition, date affichée (« Mois Année… »), n° d'inventaire automatique (`AAAA.NNN`), détourage de la photo (§ 6), modification d'un objet existant, création et gestion des salles.
+Complété à l'étape 9 : prix d'achat, prix max à la revente, date d'achat, date affichée, n° d'inventaire automatique (`AAAA.NNN`), modification d'un objet existant (menu « ⋯ » → Modifier), création de salle à la volée (popup depuis le champ Salle) et gestion des salles (renommer, supprimer — une salle doit être vide pour être supprimée). Détourage de la photo (§ 6) : reporté en v2.
 
 &#x20;
 
@@ -194,7 +194,7 @@ Base de la maquette : champs Nom, Marque, Salle, Mois, Année, Provenance, Notes
 
 &#x20;
 
-Durée ≈ 7,5 s (hors fondu de sortie) — allongée pour laisser le temps de distinguer les vitrines au passage. Un tap ou une touche (Entrée, Espace, Échap) la passe à tout moment (fondu de 260 ms).
+Durée ≈ 5,65 s (hors fondu de sortie) — trajet allongé pour laisser le temps de distinguer les vitrines au passage, mais le fondu démarre bien avant la fin mathématique du trajet pour éviter une impression d'immobilisation en fin de parcours. Un tap ou une touche (Entrée, Espace, Échap) la passe à tout moment (fondu de 260 ms).
 
 &#x20;
 
@@ -204,9 +204,9 @@ Durée ≈ 7,5 s (hors fondu de sortie) — allongée pour laisser le temps de d
 
 \- 0,6 – 1,65 s : les deux battants s'ouvrent vers l'intérieur. \*\*Une pièce d'or en relief (icône de l'app, § 2) est fixée à cheval sur les deux battants : elle se coupe en deux, chaque moitié part avec son battant.\*\*
 
-\- 0,85 – 7,85 s : la caméra avance dans l'allée, ralentie pour bien voir les 8 vitrines au passage (légère oscillation de marche, à la même cadence réelle qu'avant malgré le trajet allongé).
+\- 0,85 – 7,85 s (mathématique) : la caméra avance dans l'allée, ralentie pour bien voir les 8 vitrines au passage (légère oscillation de marche, à la même cadence réelle qu'avant malgré le trajet allongé). Le fondu interrompt ce trajet avant son terme (voir ci-dessous).
 
-\- À partir de 7,55 s : fondu vers l'accueil (650 ms).
+\- À partir de 5,65 s : fondu vers l'accueil (650 ms), pendant que la caméra termine doucement son approche.
 
 \*\*Décor :\*\*
 
@@ -264,7 +264,7 @@ Bouton « Rejouer l'intro » dans l'en-tête.
 
 \*\*Vue d'une salle\*\* (entre en glissant depuis la droite, 360 ms ; les lignes apparaissent en cascade, 70 ms d'écart) :
 
-\- Lien « ‹ Mes collections » (retour en glissant depuis la gauche), surtitre « Salle III », titre, sous-titre « N objets · valeur estimée X € ».
+\- Lien « ‹ Mes collections » (retour en glissant depuis la gauche), surtitre « Salle III », titre, sous-titre « N objets · X € » (somme des prix d'achat).
 
 \- Ligne d'objet (mise en page inspirée d'une boutique vintage) : vignette sous vitre 104 px à gauche ; nom (Sora 600, 16 px), marque (13 px, `--muted`), date manuscrite, prix en gras ; \*\*pièce favori\*\* en haut à droite ; séparateur fin.
 
@@ -282,7 +282,7 @@ Panneau qui monte depuis le bas (460 ms) sur un fond flouté (flou 14 px, voile 
 
 \- Nom (Sora 700, 27 px), marque à la ligne (15 px, `--muted`), pièce favori à droite.
 
-\- Ligne : date manuscrite, prix dans une pastille dorée, mention « valeur estimée ».
+\- Ligne : date manuscrite, prix d'achat dans une pastille dorée (sans mention « valeur estimée »).
 
 \- Description limitée à 3 lignes + bouton « Lire la suite » / « Réduire ».
 
@@ -489,7 +489,7 @@ Chaque étape se termine par un test sur téléphone et un commit.
 
 6\. \*\*Actions du menu « ⋯ »\*\*.
 
-7\. \*\*Valeur\*\* : les deux prix existent dans les données (`prixAchat`, `prixRevente`, § 5), devise unique EUR. Reste à décider : lequel afficher par défaut sur chaque écran (listes, fiche, accueil), et si les deux sont visibles quelque part.
+7\. \*\*Valeur\*\* — tranché : \*\*`prixAchat` affiché partout\*\* (listes, accueil, fiche), sans mention « valeur estimée ». `prixRevente` reste dans les données mais n'est affiché nulle part pour l'instant.
 
 &#x20;
 

@@ -224,6 +224,8 @@ Format : \*\*décision\*\* — raison / précision. ❌ = option refusée.
 
 \- ❌ Sous-titre « Collections particulières » sous le titre de l'intro (présent dans la maquette) : jugé inutile, retiré.
 
+\- \*\*Fondu de sortie déclenché bien avant la fin mathématique du trajet\*\* (0,3 s → 2,2 s d'avance) : avec l'easing ease-in-out, la caméra ralentit fortement en approchant la fin du trajet, donnant une impression d'immobilisation prolongée face au fond du couloir. Le fondu masque maintenant cette portion quasi statique plutôt que d'attendre l'arrêt complet.
+
 &#x20;
 
 \### Champs personnalisés typés : type « progression » (avant étape 9)
@@ -233,6 +235,36 @@ Format : \*\*décision\*\* — raison / précision. ❌ = option refusée.
 \- ❌ Parser du texte libre (ex. « 1-6, 9 / 25 ») pour en tirer un pourcentage : fragile, aucun format fiable à interpréter.
 
 \- \*\*Chaque champ personnalisé a désormais un type\*\* (`texte` ou `progression`), pas seulement un nom. Un champ `progression` stocke deux nombres (`actuel`, `total`) au lieu d'un texte, et s'affiche comme une vraie barre de progression (ex. « Volumes possédés » d'une collection de mangas : 6/25). Décidé avant de construire le formulaire d'ajout (étape 9) pour ne pas avoir à le refaire.
+
+&#x20;
+
+\### Formulaire d'ajout/modification (étape 9)
+
+&#x20;
+
+\- \*\*Numéro de salle suggéré automatiquement\*\* : à la création d'une salle depuis le formulaire, le chiffre romain proposé est celui qui suit le plus grand numéro de salle existant (+1), toujours modifiable.
+
+\- \*\*Question § 9.7 tranchée : `prixAchat` affiché partout\*\*, plus de mention « valeur estimée » nulle part (listes, accueil, fiche, total par salle). `prixRevente` reste capturé dans le formulaire mais n'est affiché nulle part pour l'instant — pourra resservir plus tard (stats, revente).
+
+\- \*\*Menu « ⋯ »\*\* : « Modifier » et « Supprimer » (avec confirmation) sont implémentés. « Déplacer vers une autre salle » et « Partager » restent différés (message temporaire) — toujours \[à concevoir].
+
+\- ❌ Création de salle en champs intercalés dans le formulaire (version initiale) : jugé moins propre. \*\*Remplacé par une popup dédiée\*\* (nom + numéro, Annuler/Créer) qui revient sur le formulaire une fois la salle créée, déjà sélectionnée.
+
+\- \*\*Bug corrigé : artefact visuel à la fermeture des panneaux\*\* (fiche objet, formulaire) : un `.cancel()` appelé juste après la fin de l'animation de fondu faisait brièvement réapparaître l'état « avant fermeture » avant le passage en `hidden`. Retiré : l'animation reste figée sur l'état disparu (`fill: forwards`) jusqu'à la prochaine ouverture, qui l'annule à ce moment-là seulement.
+
+&#x20;
+
+\### Gestion des salles : renommer et supprimer
+
+&#x20;
+
+\- \*\*Suppression bloquée si la salle n'est pas vide\*\* : message invitant à vider la salle d'abord (nombre d'objets affiché), plutôt que de supprimer automatiquement les objets qu'elle contient ou de les déplacer. Évite toute perte de données accidentelle.
+
+\- \*\*Point d'entrée\*\* : lien « Gérer les salles » en haut de « Mes collections », panneau listant chaque salle avec Renommer (numéro + nom) et Supprimer.
+
+\- \*\*Renumérotation automatique après suppression\*\* : les salles restantes sont renumérotées I, II, III… sans trou (plus seulement les suivantes, toute la liste est recalculée selon son ordre). Le champ technique `ordre` est recompacté au même moment pour éviter toute collision avec une salle créée ensuite.
+
+&#x20;
 
 &#x20;
 

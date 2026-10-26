@@ -25,3 +25,10 @@ export function supprimerObjet(id: number) {
 export function compterObjetsDeLaSalle(salleId: number) {
   return db.objets.where('salleId').equals(salleId).count()
 }
+
+/** N° d'inventaire auto : AAAA.NNN, compteur séquentiel par année d'achat. */
+export async function genererInventaire(annee: number): Promise<string> {
+  const compte = await db.objets.where('achatAnnee').equals(annee).count()
+  const numero = (compte + 1).toString().padStart(3, '0')
+  return `${annee}.${numero}`
+}

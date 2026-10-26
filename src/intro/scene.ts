@@ -336,8 +336,10 @@ export function createIntroScene(canvas: HTMLCanvasElement, options: IntroSceneO
   const DEBUT_TRAJET = 0.5 + PAUSE_PORTE
   // Trajet ralenti (2,9 s à l'origine, puis 4,4 s) pour laisser davantage le temps de distinguer les vitrines au passage.
   const DUREE_TRAJET = 7
-  // Le fondu de sortie démarre un peu avant la fin du trajet (chevauchement voulu, comme la maquette).
-  const FIN_ANIMATION = DEBUT_TRAJET + DUREE_TRAJET - 0.3
+  // Le fondu de sortie démarre nettement avant la fin mathématique du trajet : avec un easing
+  // ease-in-out, la caméra ralentit beaucoup en approchant c=1, ce qui donnait une impression
+  // d'immobilisation prolongée face au fond du couloir avant le fondu.
+  const FIN_ANIMATION = DEBUT_TRAJET + DUREE_TRAJET - 2.2
 
   function frame(now: number) {
     if (!running) return

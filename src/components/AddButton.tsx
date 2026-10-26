@@ -1,10 +1,10 @@
 type AddButtonProps = {
-  onClick: () => void
+  onClick: (opener: HTMLElement) => void
 }
 
 export function AddButton({ onClick }: AddButtonProps) {
   return (
-    <button className="add-fab" type="button" onClick={onClick} aria-label="Ajouter un objet">
+    <button className="add-fab" type="button" onClick={(e) => onClick(e.currentTarget)} aria-label="Ajouter un objet">
       +
     </button>
   )

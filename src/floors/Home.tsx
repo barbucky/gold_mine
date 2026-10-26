@@ -50,7 +50,7 @@ function RecentCard({ objet, salle, maintenant, onOpen }: RecentCardProps) {
             <br />
             <span className="r-brand">{objet.marque}</span>
           </span>
-          <span className="r-price">{euro.format((objet.prixRevente ?? objet.prixAchat) / 100)}</span>
+          <span className="r-price">{euro.format(objet.prixAchat / 100)}</span>
         </span>
         <span className="r-desc">{objet.description}</span>
         <span className="r-foot">

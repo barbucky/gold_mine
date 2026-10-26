@@ -1,7 +1,7 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/database'
-import { modifierObjet } from '../db/objets'
+import { modifierObjet, supprimerObjet } from '../db/objets'
 import { importerPhoto } from '../db/photos'
 import { Pedestal } from './Pedestal'
 import { FavoriteCoin } from './FavoriteCoin'
@@ -15,13 +15,15 @@ export type ObjectSheetHandle = {
 
 type ObjectSheetProps = {
   onToast: (message: string) => void
+  onEdit: (objetId: number, opener: HTMLElement | null) => void
 }
 
-export const ObjectSheet = forwardRef<ObjectSheetHandle, ObjectSheetProps>(function ObjectSheet({ onToast }, ref) {
+export const ObjectSheet = forwardRef<ObjectSheetHandle, ObjectSheetProps>(function ObjectSheet({ onToast, onEdit }, ref) {
   const [objetId, setObjetId] = useState<number | null>(null)
   const [visible, setVisible] = useState(false)
   const [descOuverte, setDescOuverte] = useState(false)
   const [descTronquable, setDescTronquable] = useState(false)
+  const [menuOuvert, setMenuOuvert] = useState(false)
   const reducedMotion = useReducedMotion()
 
   const overlayRef = useRef<HTMLDivElement>(null)
@@ -29,6 +31,7 @@ export const ObjectSheet = forwardRef<ObjectSheetHandle, ObjectSheetProps>(funct
   const stageRef = useRef<HTMLDivElement>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
   const closeBtnRef = useRef<HTMLButtonElement>(null)
+  const menuBtnRef = useRef<HTMLButtonElement>(null)
   const descRef = useRef<HTMLParagraphElement>(null)
   const openerRef = useRef<HTMLElement | null>(null)
 
@@ -42,6 +45,7 @@ export const ObjectSheet = forwardRef<ObjectSheetHandle, ObjectSheetProps>(funct
     sheetRef.current?.getAnimations().forEach((a) => a.cancel())
     openerRef.current = opener
     setDescOuverte(false)
+    setMenuOuvert(false)
     setObjetId(id)
     setVisible(true)
   }
@@ -50,13 +54,14 @@ export const ObjectSheet = forwardRef<ObjectSheetHandle, ObjectSheetProps>(funct
 
   async function close() {
     if (!visible) return
+    setMenuOuvert(false)
     if (!reducedMotion) {
+      // Volontairement pas de `.cancel()` ici : voir le commentaire équivalent dans AddEditSheet.tsx.
       const anims = [
         overlayRef.current?.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 260, delay: 60, easing: 'ease-in', fill: 'forwards' }),
         sheetRef.current?.animate([{ transform: 'none' }, { transform: 'translateY(50px)' }], { duration: 300, easing: 'ease-in', fill: 'forwards' }),
       ].filter((a): a is Animation => !!a)
       await Promise.all(anims.map((a) => a.finished)).catch(() => {})
-      anims.forEach((a) => a.cancel())
     }
     setVisible(false)
     setObjetId(null)
@@ -123,6 +128,23 @@ export const ObjectSheet = forwardRef<ObjectSheetHandle, ObjectSheetProps>(funct
     }
   }
 
+  async function handleModifier() {
+    setMenuOuvert(false)
+    const id = objet?.id
+    const opener = openerRef.current
+    await close()
+    if (id != null) onEdit(id, opener)
+  }
+
+  async function handleSupprimer() {
+    setMenuOuvert(false)
+    if (!objet?.id) return
+    if (!window.confirm(`Supprimer « ${objet.nom} » ? Cette action est irréversible.`)) return
+    await supprimerObjet(objet.id)
+    onToast('Objet supprimé.')
+    close()
+  }
+
   return (
     <div
       className="sheet-overlay"
@@ -137,18 +159,50 @@ export const ObjectSheet = forwardRef<ObjectSheetHandle, ObjectSheetProps>(funct
     >
       <div className="sheet" ref={sheetRef}>
         <div className="sheet-bar">
-          <button
-            className="round"
-            type="button"
-            aria-label="Plus d&rsquo;actions"
-            onClick={() => onToast('Modifier, déplacer ou partager l’objet : à venir dans la vraie app.')}
-          >
-            <svg viewBox="0 0 20 20" aria-hidden="true">
-              <circle cx={4} cy={10} r={1.8} />
-              <circle cx={10} cy={10} r={1.8} />
-              <circle cx={16} cy={10} r={1.8} />
-            </svg>
-          </button>
+          <div className="menu-wrap">
+            <button
+              className="round"
+              type="button"
+              aria-label="Plus d&rsquo;actions"
+              aria-expanded={menuOuvert}
+              ref={menuBtnRef}
+              onClick={() => setMenuOuvert((v) => !v)}
+            >
+              <svg viewBox="0 0 20 20" aria-hidden="true">
+                <circle cx={4} cy={10} r={1.8} />
+                <circle cx={10} cy={10} r={1.8} />
+                <circle cx={16} cy={10} r={1.8} />
+              </svg>
+            </button>
+            {menuOuvert && (
+              <div className="menu">
+                <button type="button" onClick={handleModifier}>
+                  Modifier
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuOuvert(false)
+                    onToast('Déplacer vers une autre salle : à venir dans une prochaine version.')
+                  }}
+                >
+                  Déplacer vers une autre salle
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuOuvert(false)
+                    onToast('Partager : à venir dans une prochaine version.')
+                  }}
+                >
+                  Partager
+                </button>
+                <button type="button" className="menu-danger" onClick={handleSupprimer}>
+                  Supprimer
+                </button>
+              </div>
+            )}
+          </div>
           <button className="round" type="button" aria-label="Fermer" ref={closeBtnRef} onClick={close}>
             <svg viewBox="0 0 20 20" aria-hidden="true">
               <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" strokeWidth={2} strokeLinecap="round" fill="none" />
@@ -174,8 +228,7 @@ export const ObjectSheet = forwardRef<ObjectSheetHandle, ObjectSheetProps>(funct
 
             <div className="d-meta">
               <span className="it-date">{objet.dateAffichee}</span>
-              <span className="pill">{euro.format((objet.prixRevente ?? objet.prixAchat) / 100)}</span>
-              <span className="d-est">valeur estimée</span>
+              <span className="pill">{euro.format(objet.prixAchat / 100)}</span>
             </div>
 
             <p className={`d-desc${descOuverte ? '' : ' clamp'}`} ref={descRef}>

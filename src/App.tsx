@@ -5,6 +5,7 @@ import { Elevator, type ElevatorHandle } from './components/Elevator'
 import { AddButton } from './components/AddButton'
 import { SharedSvgDefs } from './components/SharedSvgDefs'
 import { ObjectSheet, type ObjectSheetHandle } from './components/ObjectSheet'
+import { AddEditSheet, type AddEditSheetHandle } from './components/AddEditSheet'
 import { Intro } from './components/Intro'
 import { FLOORS } from './data/floors'
 import { useReducedMotion } from './lib/useReducedMotion'
@@ -21,6 +22,7 @@ function App() {
   const [introVisible, setIntroVisible] = useState(true)
   const elevatorRef = useRef<ElevatorHandle>(null)
   const objectSheetRef = useRef<ObjectSheetHandle>(null)
+  const addEditRef = useRef<AddEditSheetHandle>(null)
   const mainRef = useRef<HTMLElement>(null)
   const reducedMotion = useReducedMotion()
 
@@ -50,12 +52,16 @@ function App() {
     objectSheetRef.current?.open(objetId, opener)
   }
 
+  function editObjet(objetId: number, opener: HTMLElement | null) {
+    addEditRef.current?.openForEdit(objetId, opener)
+  }
+
   function renderFloor() {
     switch (current) {
       case 0:
         return <Home onSeeAll={() => goTo(1)} onOpenObjet={openObjet} />
       case 1:
-        return <Collections onOpenObjet={openObjet} />
+        return <Collections onOpenObjet={openObjet} onToast={setToast} />
       default:
         return <Stats />
     }
@@ -68,11 +74,12 @@ function App() {
       <main className="app-main" ref={mainRef}>
         {renderFloor()}
       </main>
-      <AddButton onClick={() => setToast('Le formulaire d’ajout arrive à l’étape 9.')} />
+      <AddButton onClick={(opener) => addEditRef.current?.openForNew(opener)} />
       {toast && <div className="toast">{toast}</div>}
       <ElevatorPanel current={current} disabled={busy} onGo={goTo} />
       <Elevator ref={elevatorRef} />
-      <ObjectSheet ref={objectSheetRef} onToast={setToast} />
+      <ObjectSheet ref={objectSheetRef} onToast={setToast} onEdit={editObjet} />
+      <AddEditSheet ref={addEditRef} onToast={setToast} />
       {introVisible && <Intro onFinished={() => setIntroVisible(false)} />}
     </div>
   )
