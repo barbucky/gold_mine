@@ -3,10 +3,10 @@ import { zipSync, unzipSync, type Zippable } from 'fflate'
 import { db } from '../db/database'
 import type { Salle, Objet, PieceJointe, Reglage } from '../db/types'
 
-const VERSION_SAUVEGARDE = 2
+const VERSION_SAUVEGARDE = 3
 const CLE_DERNIERE_SAUVEGARDE = 'derniereSauvegarde'
 
-type SalleJSON = Omit<Salle, 'creeLe'> & { creeLe: string }
+type SalleJSON = Omit<Salle, 'creeLe' | 'icone'> & { creeLe: string }
 type ObjetJSON = Omit<Objet, 'creeLe' | 'modifieLe'> & { creeLe: string; modifieLe: string }
 type PhotoMetaJSON = { id: number; objetId: number; largeur: number; hauteur: number; estDetouree: boolean }
 type PieceMetaJSON = {
@@ -49,7 +49,10 @@ export async function exporterSauvegarde(): Promise<void> {
   const donnees: DonneesJSON = {
     version: VERSION_SAUVEGARDE,
     exporteLe,
-    salles: salles.map((s) => ({ ...s, creeLe: s.creeLe.toISOString() })),
+    salles: salles.map((s) => {
+      const { icone: _icone, ...reste } = s
+      return { ...reste, creeLe: s.creeLe.toISOString() }
+    }),
     objets: objets.map((o) => ({ ...o, creeLe: o.creeLe.toISOString(), modifieLe: o.modifieLe.toISOString() })),
     photos: photos.map((p) => ({ id: p.id!, objetId: p.objetId, largeur: p.largeur, hauteur: p.hauteur, estDetouree: p.estDetouree })),
     pieces: pieces.map((p) => ({
@@ -74,6 +77,12 @@ export async function exporterSauvegarde(): Promise<void> {
     fichiers[`${dossier}/miniature.jpg`] = new Uint8Array(await photo.miniature.arrayBuffer())
     if (photo.detouree) {
       fichiers[`${dossier}/detouree.png`] = new Uint8Array(await photo.detouree.arrayBuffer())
+    }
+  }
+
+  for (const salle of salles) {
+    if (salle.icone) {
+      fichiers[`salles/${salle.id}/icone.png`] = new Uint8Array(await salle.icone.arrayBuffer())
     }
   }
 
@@ -114,7 +123,7 @@ export async function importerSauvegarde(fichier: File): Promise<void> {
   } catch {
     throw new Error('Fichier de sauvegarde illisible.')
   }
-  if (donnees.version !== 1 && donnees.version !== VERSION_SAUVEGARDE) {
+  if (donnees.version < 1 || donnees.version > VERSION_SAUVEGARDE) {
     throw new Error('Version de sauvegarde non reconnue.')
   }
 
@@ -124,6 +133,13 @@ export async function importerSauvegarde(fichier: File): Promise<void> {
     await db.salles.bulkAdd(donnees.salles.map((s) => ({ ...s, creeLe: new Date(s.creeLe) })))
     await db.objets.bulkAdd(donnees.objets.map((o) => ({ ...o, creeLe: new Date(o.creeLe), modifieLe: new Date(o.modifieLe) })))
     if (donnees.reglages.length) await db.reglages.bulkAdd(donnees.reglages)
+
+    for (const salle of donnees.salles) {
+      const iconeOctets = contenu[`salles/${salle.id}/icone.png`]
+      if (iconeOctets) {
+        await db.salles.update(salle.id!, { icone: new Blob([iconeOctets as BlobPart], { type: 'image/png' }) })
+      }
+    }
 
     for (const meta of donnees.photos) {
       const dossier = `photos/${meta.id}`

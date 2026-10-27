@@ -19,6 +19,8 @@ export type Salle = {
   creeLe: Date
   /** Gabarit de champs proposés à l'ajout d'un objet de cette salle. */
   champsPersonnalises: ChampPersonnalise[]
+  /** Logo/icône de la collection (toujours ré-encodé en PNG carré à l'import, quel que soit le format d'origine). */
+  icone?: Blob
 }
 
 export type Objet = {

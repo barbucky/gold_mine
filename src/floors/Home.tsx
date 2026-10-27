@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/database'
 import { Vitrine } from '../components/Vitrine'
+import { SalleIcone } from '../components/SalleIcone'
 import { obtenirDerniereSauvegarde } from '../lib/sauvegarde'
 import { quantiteObjet, trouverProgression, valeurAchatUnitaire } from '../lib/valeurObjet'
 import type { Objet, Salle } from '../db/types'
@@ -58,7 +59,12 @@ function RecentCard({ objet, salle, maintenant, onOpen }: RecentCardProps) {
         </span>
         <span className="r-desc">{objet.description}</span>
         <span className="r-foot">
-          {salle && <span className="chip">{salle.nom}</span>}
+          {salle && (
+            <span className="chip">
+              <SalleIcone salle={salle} taille={14} />
+              {salle.nom}
+            </span>
+          )}
           <span className="it-date">{objet.dateAffichee}</span>
           <span className="r-inv">{formatAnciennete(objet.creeLe, maintenant)}</span>
         </span>

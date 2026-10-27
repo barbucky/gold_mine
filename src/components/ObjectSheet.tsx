@@ -6,6 +6,7 @@ import { importerPhoto } from '../db/photos'
 import { Pedestal } from './Pedestal'
 import { FavoriteCoin } from './FavoriteCoin'
 import { PiecesJointes } from './PiecesJointes'
+import { SalleIcone } from './SalleIcone'
 import { useReducedMotion } from '../lib/useReducedMotion'
 import { trouverProgression, valeurAchatUnitaire } from '../lib/valeurObjet'
 import type { ValeurProgression } from '../db/types'
@@ -264,7 +265,7 @@ export const ObjectSheet = forwardRef<ObjectSheetHandle, ObjectSheetProps>(funct
               <div>
                 <dt>Emplacement</dt>
                 <dd>
-                  {salle ? `Salle ${salle.numero} · ${salle.nom}` : ''}
+                  {salle && <SalleIcone salle={salle} />} {salle ? `Salle ${salle.numero} · ${salle.nom}` : ''}
                 </dd>
               </div>
               {(objet.quantite ?? 1) > 1 && (

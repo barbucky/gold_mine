@@ -1,9 +1,26 @@
 import { db } from './database'
 import { versRomain } from '../lib/romain'
+import { chargerImage, formatIconeAccepte, redimensionnerCarre } from '../lib/images'
 import type { Salle } from './types'
+
+const TAILLE_ICONE = 128
 
 export function creerSalle(donnees: Omit<Salle, 'id' | 'creeLe'>) {
   return db.salles.add({ ...donnees, creeLe: new Date() })
+}
+
+/** Importe (et remplace) l'icône/logo d'une salle — toujours ré-encodée en PNG carré. */
+export async function importerIconeSalle(salleId: number, file: File) {
+  if (!formatIconeAccepte(file)) {
+    throw new Error('Format non reconnu. Formats acceptés : SVG, PNG, JPEG ou WebP.')
+  }
+  const image = await chargerImage(file)
+  const icone = await redimensionnerCarre(image, TAILLE_ICONE)
+  await db.salles.update(salleId, { icone })
+}
+
+export function supprimerIconeSalle(salleId: number) {
+  return db.salles.update(salleId, { icone: undefined })
 }
 
 export function listerSalles() {

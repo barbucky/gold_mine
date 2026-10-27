@@ -262,7 +262,7 @@ Bouton « Rejouer l'intro » dans l'en-tête.
 
 &#x20;
 
-\*\*Liste des salles\*\* : médaillon rond avec chiffre romain, nom de la salle, période couverte et « dernier ajout : Nom · Marque », nombre d'objets, chevron. Tap → salle.
+\*\*Liste des salles\*\* : médaillon rond avec chiffre romain, nom de la salle, période couverte et « dernier ajout : Nom · Marque », nombre d'objets, chevron. Tap → salle. \*\*Icône/logo de la collection\*\* (étape 14, optionnel) : accolée au nom partout où la salle est mentionnée — ici, dans « Gérer les salles », à l'accueil (badge de salle sous « Dernières acquisitions »), sur la fiche objet (ligne Emplacement) et dans Statistiques (barres, légende du camembert). Importée en SVG/PNG/JPEG/WebP, toujours ré-encodée en PNG carré (128 px) à l'import — jamais de SVG brut stocké/affiché (risque de script embarqué).
 
 &#x20;
 

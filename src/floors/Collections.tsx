@@ -5,6 +5,7 @@ import { modifierObjet } from '../db/objets'
 import { chargerJeuDExemple } from '../db/seed'
 import { Vitrine } from '../components/Vitrine'
 import { FavoriteCoin } from '../components/FavoriteCoin'
+import { SalleIcone } from '../components/SalleIcone'
 import { useReducedMotion } from '../lib/useReducedMotion'
 import { OPTIONS_TRI, trierObjets, type TriCle } from '../lib/triObjets'
 import { quantiteObjet, trouverProgression, valeurAchat, valeurAchatUnitaire } from '../lib/valeurObjet'
@@ -141,7 +142,9 @@ export function Collections({ onOpenObjet, onOpenGestionSalles }: CollectionsPro
                 <button className="room" type="button" key={salle.id} onClick={() => setSalleOuverteId(salle.id!)}>
                   <span className="numeral">{salle.numero}</span>
                   <span>
-                    <span className="n">{salle.nom}</span>
+                    <span className="n">
+                      <SalleIcone salle={salle} taille={16} /> {salle.nom}
+                    </span>
                     <span className="s">{sousTitre}</span>
                   </span>
                   <span className="count">
@@ -165,7 +168,9 @@ export function Collections({ onOpenObjet, onOpenGestionSalles }: CollectionsPro
               ‹ Mes collections
             </button>
             <div className="eyebrow">Salle {salleOuverte.numero}</div>
-            <h1>{salleOuverte.nom}</h1>
+            <h1>
+              <SalleIcone salle={salleOuverte} taille={28} /> {salleOuverte.nom}
+            </h1>
             <p className="room-sub">
               {nombreDansLaSalle} objet{nombreDansLaSalle > 1 ? 's' : ''} · {euro.format((statsParSalle.get(salleOuverte.id!)?.totalPrixAchat ?? 0) / 100)}
             </p>

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/database'
 import { quantiteObjet, valeurAchat, valeurAchatParAnnee, valeurRevente } from '../lib/valeurObjet'
+import { SalleIcone } from '../components/SalleIcone'
 import type { Objet, Salle } from '../db/types'
 
 const euro = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
@@ -50,17 +51,19 @@ function grouperValeurAchatEtalee(objets: Objet[], sallesParId: Map<number | und
 }
 
 type BarreProps = {
-  label: string
+  salle: Salle
   valeur: number
   max: number
   afficher: (v: number) => string
 }
 
-function Barre({ label, valeur, max, afficher }: BarreProps) {
+function Barre({ salle, valeur, max, afficher }: BarreProps) {
   const largeur = max > 0 ? (valeur / max) * 100 : 0
   return (
     <div className="bar-row euro">
-      <span>{label}</span>
+      <span>
+        <SalleIcone salle={salle} taille={15} /> {salle.nom}
+      </span>
       <div className="track">
         <div className="fill" style={{ width: `${largeur}%` }} />
       </div>
@@ -100,7 +103,9 @@ function Camembert({ lignes }: CamembertProps) {
         {parts.map((p) => (
           <li key={p.ligne.salle.id}>
             <span className="pie-dot" style={{ background: `var(${p.couleur})` }} />
-            <span className="pie-legend-nom">{p.ligne.salle.nom}</span>
+            <span className="pie-legend-nom">
+              <SalleIcone salle={p.ligne.salle} taille={14} /> {p.ligne.salle.nom}
+            </span>
             <span className="v">{Math.round(p.pct)}%</span>
           </li>
         ))}
@@ -302,7 +307,7 @@ export function Stats() {
             <h2>Objets par salle</h2>
             <div className="bars">
               {lignesParNombre.map(({ salle, nombre }) => (
-                <Barre key={salle.id} label={salle.nom} valeur={nombre} max={maxNombre} afficher={(v) => `${v}`} />
+                <Barre key={salle.id} salle={salle} valeur={nombre} max={maxNombre} afficher={(v) => `${v}`} />
               ))}
             </div>
           </div>
@@ -311,7 +316,7 @@ export function Stats() {
             <h2>Valeur d&rsquo;achat par salle</h2>
             <div className="bars">
               {lignesParAchat.map(({ salle, totalAchat }) => (
-                <Barre key={salle.id} label={salle.nom} valeur={totalAchat} max={maxAchat} afficher={(v) => euro.format(v / 100)} />
+                <Barre key={salle.id} salle={salle} valeur={totalAchat} max={maxAchat} afficher={(v) => euro.format(v / 100)} />
               ))}
             </div>
           </div>
@@ -321,7 +326,7 @@ export function Stats() {
               <h2>Revente potentielle par salle</h2>
               <div className="bars">
                 {lignesParRevente.map(({ salle, totalRevente }) => (
-                  <Barre key={salle.id} label={salle.nom} valeur={totalRevente} max={maxRevente} afficher={(v) => euro.format(v / 100)} />
+                  <Barre key={salle.id} salle={salle} valeur={totalRevente} max={maxRevente} afficher={(v) => euro.format(v / 100)} />
                 ))}
               </div>
             </div>

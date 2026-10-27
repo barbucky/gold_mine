@@ -328,5 +328,19 @@ Format : \*\*décision\*\* — raison / précision. ❌ = option refusée.
 
 &#x20;
 
+\### Icône/logo de collection, étape 14
+
+&#x20;
+
+\- \*\*Toujours ré-encodée en PNG carré (128 px), quel que soit le format d'origine\*\* (SVG, PNG, JPEG, WebP acceptés à l'import) : évite de stocker/afficher du SVG brut (un SVG peut embarquer du script — risque de sécurité), et donne un rendu uniforme partout où l'icône est affichée en petit. Pas de recadrage : l'image est centrée dans le cadre carré (fond transparent) pour ne jamais couper un logo non carré.
+
+\- \*\*Champ `icone?: Blob` directement sur `Salle`\*\* (pas de table séparée) : une seule icône par salle, remplacée en entier à chaque import — pas besoin de la richesse d'une table dédiée (plusieurs fichiers, historique) comme pour les documents.
+
+\- \*\*Modifiable à la création \*\*ET\*\* après coup\*\* : champ optionnel dans le popup « Nouvelle salle » (AddEditSheet), et dans le popup « Renommer » de « Gérer les salles » (avec aperçu de l'icône actuelle et bouton « Retirer »).
+
+\- \*\*Sauvegarde étendue (version 3 du format `.zip`)\*\* : comme `icone` est un `Blob`, il est exclu du JSON (un `Blob` ne se sérialise pas) et exporté à part (`salles/{id}/icone.png`), sur le même principe que les photos et documents. Import rétrocompatible avec les versions 1 et 2 (sans icônes).
+
+&#x20;
+
 &#x20;
 

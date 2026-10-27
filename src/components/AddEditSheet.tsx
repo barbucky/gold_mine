@@ -2,7 +2,7 @@ import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 're
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/database'
 import { creerObjet, modifierObjet, genererInventaire } from '../db/objets'
-import { creerSalle } from '../db/salles'
+import { creerSalle, importerIconeSalle } from '../db/salles'
 import { importerPhoto } from '../db/photos'
 import { useReducedMotion } from '../lib/useReducedMotion'
 import { prochainNumeroRomain } from '../lib/romain'
@@ -87,6 +87,7 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
   const [salleDialogOuvert, setSalleDialogOuvert] = useState(false)
   const [nouvelleSalleNumero, setNouvelleSalleNumero] = useState('')
   const [nouvelleSalleNom, setNouvelleSalleNom] = useState('')
+  const [nouvelleSalleIcone, setNouvelleSalleIcone] = useState<File | null>(null)
   const [erreur, setErreur] = useState<string | null>(null)
   const [enregistrement, setEnregistrement] = useState(false)
   // Tant que la date affichée n'a pas été modifiée à la main, elle suit automatiquement
@@ -109,6 +110,7 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
     setSalleDialogOuvert(false)
     setNouvelleSalleNumero('')
     setNouvelleSalleNom('')
+    setNouvelleSalleIcone(null)
     setErreur(null)
     setDateAfficheeAuto(true)
   }
@@ -209,10 +211,18 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
   async function creerNouvelleSalle() {
     if (!nouvelleSalleNumero.trim() || !nouvelleSalleNom.trim() || !salles) return
     const id = await creerSalle({ numero: nouvelleSalleNumero.trim(), nom: nouvelleSalleNom.trim(), ordre: salles.length, champsPersonnalises: [] })
+    if (nouvelleSalleIcone) {
+      try {
+        await importerIconeSalle(id, nouvelleSalleIcone)
+      } catch (err) {
+        onToast(err instanceof Error ? err.message : 'Impossible d’importer cette icône.')
+      }
+    }
     setForm((f) => ({ ...f, salleId: id }))
     setSalleDialogOuvert(false)
     setNouvelleSalleNumero('')
     setNouvelleSalleNom('')
+    setNouvelleSalleIcone(null)
   }
 
   function ajusterQuantite(delta: number) {
@@ -552,6 +562,15 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
             <div className="field">
               <label htmlFor="fSalleNom">Nom de la salle</label>
               <input id="fSalleNom" autoFocus value={nouvelleSalleNom} onChange={(e) => setNouvelleSalleNom(e.target.value)} />
+            </div>
+            <div className="field">
+              <label htmlFor="fSalleIcone">Icône (optionnel)</label>
+              <input
+                id="fSalleIcone"
+                type="file"
+                accept="image/svg+xml,image/png,image/jpeg,image/webp"
+                onChange={(e) => setNouvelleSalleIcone(e.target.files?.[0] ?? null)}
+              />
             </div>
             <div className="mini-dialog-actions">
               <button className="ghost" type="button" onClick={() => setSalleDialogOuvert(false)}>

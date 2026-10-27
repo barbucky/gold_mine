@@ -2,10 +2,15 @@
 // `prepareImage` est repris de la maquette (docs/maquettes/ma-galerie.html), autorisé tel quel par CLAUDE.md.
 
 const FORMATS_ACCEPTES = ['image/jpeg', 'image/png', 'image/webp']
+const FORMATS_ICONE_ACCEPTES = ['image/svg+xml', 'image/png', 'image/jpeg', 'image/webp']
 const EXTENSIONS_HEIC = ['.heic', '.heif']
 
 export function formatAccepte(file: File): boolean {
   return FORMATS_ACCEPTES.includes(file.type.toLowerCase())
+}
+
+export function formatIconeAccepte(file: File): boolean {
+  return FORMATS_ICONE_ACCEPTES.includes(file.type.toLowerCase())
 }
 
 export function estHeic(file: File): boolean {
@@ -114,6 +119,20 @@ export function prepareImage(image: HTMLImageElement, maxSide = 1024): ImagePrep
   out.height = y1 - y0 + 1
   out.getContext('2d')!.drawImage(c, x0, y0, out.width, out.height, 0, 0, out.width, out.height)
   return { canvas: out, detouree }
+}
+
+/** Redimensionne une image dans un cadre carré (sans recadrage, fond transparent) — pour les icônes. */
+export async function redimensionnerCarre(image: HTMLImageElement, taille: number): Promise<Blob> {
+  const nw = image.naturalWidth || taille
+  const nh = image.naturalHeight || taille
+  const sc = Math.min(taille / nw, taille / nh)
+  const w = Math.round(nw * sc)
+  const h = Math.round(nh * sc)
+  const canvas = document.createElement('canvas')
+  canvas.width = taille
+  canvas.height = taille
+  canvas.getContext('2d')!.drawImage(image, (taille - w) / 2, (taille - h) / 2, w, h)
+  return canvasVersBlob(canvas, 'image/png')
 }
 
 export { canvasVersBlob }

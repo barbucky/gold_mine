@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/database'
-import { modifierSalle, supprimerSalle } from '../db/salles'
+import { importerIconeSalle, modifierSalle, supprimerIconeSalle, supprimerSalle } from '../db/salles'
 import { useReducedMotion } from '../lib/useReducedMotion'
+import { useObjectUrl } from '../lib/useObjectUrl'
+import { SalleIcone } from './SalleIcone'
 import type { ChampPersonnalise, Salle, TypeChamp } from '../db/types'
 
 type ManageSallesSheetProps = {
@@ -19,6 +21,7 @@ export function ManageSallesSheet({ open, onClose, onToast }: ManageSallesSheetP
   const [renommageId, setRenommageId] = useState<number | null>(null)
   const [renNumero, setRenNumero] = useState('')
   const [renNom, setRenNom] = useState('')
+  const [renIconeFile, setRenIconeFile] = useState<File | null>(null)
   const [champsSalleId, setChampsSalleId] = useState<number | null>(null)
   const [nouveauChampNom, setNouveauChampNom] = useState('')
   const [nouveauChampType, setNouveauChampType] = useState<TypeChamp>('texte')
@@ -30,6 +33,8 @@ export function ManageSallesSheet({ open, onClose, onToast }: ManageSallesSheetP
     for (const o of objets) comptesParSalle.set(o.salleId, (comptesParSalle.get(o.salleId) ?? 0) + 1)
   }
   const salleChamps = salles?.find((s) => s.id === champsSalleId)
+  const salleRenommage = salles?.find((s) => s.id === renommageId)
+  const renIconeApercu = useObjectUrl(renIconeFile ?? undefined)
 
   async function close() {
     if (!reducedMotion) {
@@ -76,13 +81,27 @@ export function ManageSallesSheet({ open, onClose, onToast }: ManageSallesSheetP
     setRenommageId(salle.id!)
     setRenNumero(salle.numero)
     setRenNom(salle.nom)
+    setRenIconeFile(null)
   }
 
   async function enregistrerRenommage() {
     if (renommageId == null || !renNumero.trim() || !renNom.trim()) return
     await modifierSalle(renommageId, { numero: renNumero.trim(), nom: renNom.trim() })
+    if (renIconeFile) {
+      try {
+        await importerIconeSalle(renommageId, renIconeFile)
+      } catch (err) {
+        onToast(err instanceof Error ? err.message : 'Impossible d’importer cette icône.')
+      }
+    }
     setRenommageId(null)
     onToast('Salle renommée.')
+  }
+
+  async function retirerIcone() {
+    if (renommageId == null) return
+    await supprimerIconeSalle(renommageId)
+    setRenIconeFile(null)
   }
 
   function ouvrirChamps(salle: Salle) {
@@ -148,6 +167,7 @@ export function ManageSallesSheet({ open, onClose, onToast }: ManageSallesSheetP
           {salles?.map((salle) => (
             <li key={salle.id}>
               <span className="salle-manage-label">
+                <SalleIcone salle={salle} />
                 {salle.numero} · {salle.nom}
                 <span className="note"> ({comptesParSalle.get(salle.id!) ?? 0} objets)</span>
               </span>
@@ -184,6 +204,27 @@ export function ManageSallesSheet({ open, onClose, onToast }: ManageSallesSheetP
             <div className="field">
               <label htmlFor="rnSalleNom">Nom de la salle</label>
               <input id="rnSalleNom" autoFocus value={renNom} onChange={(e) => setRenNom(e.target.value)} />
+            </div>
+            <div className="field">
+              <label htmlFor="rnSalleIcone">Icône (optionnel)</label>
+              <div className="icone-champ">
+                {renIconeApercu ? (
+                  <img className="icone-apercu" src={renIconeApercu} alt="" />
+                ) : (
+                  salleRenommage && <SalleIcone salle={salleRenommage} taille={48} />
+                )}
+                <input
+                  id="rnSalleIcone"
+                  type="file"
+                  accept="image/svg+xml,image/png,image/jpeg,image/webp"
+                  onChange={(e) => setRenIconeFile(e.target.files?.[0] ?? null)}
+                />
+              </div>
+              {salleRenommage?.icone && !renIconeFile && (
+                <button className="link" type="button" onClick={retirerIcone}>
+                  Retirer l&rsquo;icône
+                </button>
+              )}
             </div>
             <div className="mini-dialog-actions">
               <button className="ghost" type="button" onClick={() => setRenommageId(null)}>

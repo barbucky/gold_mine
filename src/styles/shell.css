@@ -316,6 +316,9 @@
 }
 
 .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -1349,6 +1352,10 @@ form {
   font-size: 14px;
 }
 
+.bar-row > span:first-child {
+  overflow-wrap: anywhere;
+}
+
 .bar-row.euro {
   grid-template-columns: minmax(0, 8.5rem) 1fr 4.6rem;
 }
@@ -1475,9 +1482,7 @@ form {
 }
 
 .pie-legend-nom {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .evo-head {
@@ -1627,4 +1632,28 @@ form {
 
 .viewer-ouvrir {
   justify-self: center;
+}
+
+/* ---------- Icône de salle ---------- */
+.salle-icone {
+  display: inline-block;
+  flex-shrink: 0;
+  border-radius: 4px;
+  object-fit: contain;
+  vertical-align: middle;
+}
+
+.icone-apercu {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  object-fit: contain;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--line);
+}
+
+.icone-champ {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
