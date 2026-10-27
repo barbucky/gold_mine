@@ -1,10 +1,11 @@
 import Dexie, { type Table } from 'dexie'
-import type { Objet, Photo, Reglage, Salle } from './types'
+import type { Objet, Photo, PieceJointe, Reglage, Salle } from './types'
 
 class McGoldMineDB extends Dexie {
   salles!: Table<Salle, number>
   objets!: Table<Objet, number>
   photos!: Table<Photo, number>
+  piecesJointes!: Table<PieceJointe, number>
   reglages!: Table<Reglage, string>
 
   constructor() {
@@ -19,6 +20,13 @@ class McGoldMineDB extends Dexie {
       salles: '++id, ordre',
       objets: '++id, salleId, favori, achatAnnee, anneeCreation',
       photos: '++id, objetId',
+      reglages: 'cle',
+    })
+    this.version(3).stores({
+      salles: '++id, ordre',
+      objets: '++id, salleId, favori, achatAnnee, anneeCreation',
+      photos: '++id, objetId',
+      piecesJointes: '++id, objetId',
       reglages: 'cle',
     })
   }

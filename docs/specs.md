@@ -292,6 +292,8 @@ Panneau qui monte depuis le bas (460 ms) sur un fond flouté (flou 14 px, voile 
 
 \- Tableau d'informations : Emplacement, Inventaire, Provenance.
 
+\- \*\*Documents\*\* (étape 13) : section sous le tableau d'informations — liste des factures/documents attachés (photo ou PDF), ajout et suppression depuis la fiche, consultation via un visualiseur plein écran intégré à l'app (secours : bouton « Ouvrir dans une autre app » via partage natif). Voir § 7bis.
+
 \- Fermeture : ×, tap hors du panneau, Échap. Le focus revient à l'élément d'origine.
 
 \- Menu « ⋯ » : modifier, déplacer vers une autre salle, partager, supprimer. \*\*\[à concevoir]\*\*
@@ -421,13 +423,29 @@ reglages  cle, valeur   (son, introVue, derniereSauvegarde…)
 
 &#x20;
 
-\- \*\*Exporter\*\* : un fichier `.zip` (données en JSON + toutes les photos) à enregistrer dans Fichiers ou iCloud Drive.
+\- \*\*Exporter\*\* : un fichier `.zip` (données en JSON + toutes les photos + tous les documents attachés) à enregistrer dans Fichiers ou iCloud Drive.
 
 \- \*\*Restaurer\*\* : import de ce fichier (remplacement complet, après confirmation dans l'interface).
 
 \- \*\*Rappel\*\* discret si la dernière sauvegarde a plus de 30 jours.
 
 \- Plus tard, éventuellement : synchronisation en ligne (hors périmètre de la version 1).
+
+&#x20;
+
+\## 7bis. Documents (factures) \[validé]
+
+&#x20;
+
+\- Un objet peut avoir plusieurs documents attachés (facture d'achat, garantie, facture de réparation…). Fichiers acceptés : \*\*photo ou PDF uniquement\*\*, 15 Mo maximum chacun.
+
+\- Depuis la fiche objet, section « Documents » : liste (icône + nom de fichier + date d'ajout), bouton « Ajouter », bouton « Retirer » par document (confirmation demandée).
+
+\- Pas de vignette générée pour les PDF — juste une icône générique. Les photos n'ont pas non plus de miniature dédiée (le fichier original sert directement à l'aperçu).
+
+\- Consultation : une \*\*photo\*\* ouvre un visualiseur plein écran intégré à l'app. Un \*\*PDF\*\* ouvre directement le partage natif iOS (le rendu PDF intégré en `<iframe>` restait zoomé, non corrigible côté CSS). Le visualiseur photo garde un bouton de secours « Ouvrir dans une autre app » (même mécanisme de partage).
+
+\- Inclus dans la sauvegarde/restauration (§ 7) : les documents sont exportés dans le `.zip` au même titre que les photos.
 
 \---
 
@@ -494,6 +512,22 @@ Chaque étape se termine par un test sur téléphone et un commit.
 6\. \*\*Actions du menu « ⋯ »\*\*.
 
 7\. \*\*Valeur\*\* — tranché : \*\*`prixAchat` affiché partout\*\* (listes, accueil, fiche), sans mention « valeur estimée ». `prixRevente` reste dans les données mais n'est affiché nulle part pour l'instant.
+
+&#x20;
+
+\---
+
+&#x20;
+
+\## 10. Pistes v2
+
+&#x20;
+
+1\. \*\*Détourage par IA\*\* — voir § 6.
+
+&#x20;
+
+2\. \*\*Verrou d'accès à l'app\*\* (code ou Face ID/Touch ID via `WebAuthn`) : protège contre un accès occasionnel si le téléphone est déverrouillé pour autre chose (prêté, posé, emprunté un instant). Ne remplace pas le code du téléphone et n'est pas un chiffrement réel des données — contournable par quelqu'un ayant un accès technique poussé à l'appareil. Évoqué en discussion le 2026-10-26, suite à une question sur les risques liés à l'absence de verrou (l'app expose un inventaire détaillé d'objets de valeur avec prix d'achat).
 
 &#x20;
 

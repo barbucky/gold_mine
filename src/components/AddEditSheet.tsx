@@ -6,7 +6,26 @@ import { creerSalle } from '../db/salles'
 import { importerPhoto } from '../db/photos'
 import { useReducedMotion } from '../lib/useReducedMotion'
 import { prochainNumeroRomain } from '../lib/romain'
-import type { ChampPersonnalise, ValeurChamp, ValeurProgression } from '../db/types'
+import type { ChampPersonnalise, ValeurChamp } from '../db/types'
+
+/** Représentation « brouillon » d'un champ progression : du/au en texte libre pendant la saisie
+ *  (pour ne pas afficher de 0 forcé quand le champ est vide), converti en nombres à l'enregistrement. */
+type ValeurProgressionFormulaire = { du: string; au: string; complet: boolean }
+type ValeurChampFormulaire = string | ValeurProgressionFormulaire
+
+function estProgressionFormulaire(valeur: ValeurChampFormulaire): valeur is ValeurProgressionFormulaire {
+  return typeof valeur === 'object' && 'du' in valeur
+}
+
+/** Convertit le brouillon (du/au en texte) en valeurs finales numériques, prêtes pour l'enregistrement. */
+function versDetailsFinales(details: Record<string, ValeurChampFormulaire>): Record<string, ValeurChamp> {
+  return Object.fromEntries(
+    Object.entries(details).map(([nomChamp, valeur]) => [
+      nomChamp,
+      estProgressionFormulaire(valeur) ? { du: Number(valeur.du) || 1, au: Number(valeur.au) || 1, complet: valeur.complet } : valeur,
+    ]),
+  )
+}
 
 export type AddEditSheetHandle = {
   openForNew: (opener: HTMLElement | null) => void
@@ -20,6 +39,7 @@ type AddEditSheetProps = {
 type EtatFormulaire = {
   nom: string
   marque: string
+  quantite: string
   salleId: number | null
   dateAffichee: string
   anneeCreation: string
@@ -31,7 +51,7 @@ type EtatFormulaire = {
   provenance: string
   reference: string
   description: string
-  details: Record<string, ValeurChamp>
+  details: Record<string, ValeurChampFormulaire>
 }
 
 /** « Circa 1956 » à partir de l'année de création, ou de l'année d'achat à défaut. */
@@ -43,6 +63,7 @@ function genererDateAffichee(anneeCreation: string, achatAnnee: string): string 
 const FORMULAIRE_VIDE: EtatFormulaire = {
   nom: '',
   marque: '',
+  quantite: '1',
   salleId: null,
   dateAffichee: '',
   anneeCreation: '',
@@ -115,6 +136,7 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
     setForm({
       nom: objet.nom,
       marque: objet.marque,
+      quantite: (objet.quantite ?? 1).toString(),
       salleId: objet.salleId,
       dateAffichee: objet.dateAffichee,
       anneeCreation,
@@ -126,7 +148,12 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
       provenance: objet.provenance,
       reference: objet.reference ?? '',
       description: objet.description,
-      details: objet.details,
+      details: Object.fromEntries(
+        Object.entries(objet.details).map(([nomChamp, valeur]) => [
+          nomChamp,
+          typeof valeur === 'object' ? { du: valeur.du.toString(), au: valeur.au.toString(), complet: valeur.complet } : valeur,
+        ]),
+      ),
     })
     setPhotoFile(null)
     setSalleDialogOuvert(false)
@@ -188,19 +215,26 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
     setNouvelleSalleNom('')
   }
 
+  function ajusterQuantite(delta: number) {
+    setForm((f) => {
+      const actuelle = Math.max(1, Number(f.quantite) || 1)
+      return { ...f, quantite: Math.max(1, actuelle + delta).toString() }
+    })
+  }
+
   function definirValeurTexte(nomChamp: string, valeur: string) {
     setForm((f) => ({ ...f, details: { ...f.details, [nomChamp]: valeur } }))
   }
 
-  function valeurProgressionDe(nomChamp: string): ValeurProgression {
+  function valeurProgressionDe(nomChamp: string): ValeurProgressionFormulaire {
     const existante = form.details[nomChamp]
-    return typeof existante === 'object' && 'du' in existante ? existante : { du: 1, au: 1, complet: false }
+    return existante && estProgressionFormulaire(existante) ? existante : { du: '', au: '', complet: false }
   }
 
-  function definirValeurProgression(nomChamp: string, cle: 'du' | 'au' | 'complet', valeur: number | boolean) {
+  function definirValeurProgression(nomChamp: string, cle: 'du' | 'au' | 'complet', valeur: string | boolean) {
     setForm((f) => {
       const existante = f.details[nomChamp]
-      const base = typeof existante === 'object' && 'du' in existante ? existante : { du: 1, au: 1, complet: false }
+      const base = existante && estProgressionFormulaire(existante) ? existante : { du: '', au: '', complet: false }
       return { ...f, details: { ...f.details, [nomChamp]: { ...base, [cle]: valeur } } }
     })
   }
@@ -223,6 +257,7 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
         salleId: form.salleId,
         nom: form.nom.trim(),
         marque: form.marque.trim(),
+        quantite: form.quantite ? Math.max(1, Number(form.quantite)) : 1,
         dateAffichee: form.dateAffichee.trim(),
         anneeCreation: form.anneeCreation ? Number(form.anneeCreation) : undefined,
         achatMois: form.achatMois ? Number(form.achatMois) : undefined,
@@ -233,7 +268,7 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
         provenance: form.provenance.trim(),
         reference: form.reference.trim() || undefined,
         description: form.description.trim(),
-        details: form.details,
+        details: versDetailsFinales(form.details),
       }
 
       let idCible = objetId
@@ -293,27 +328,47 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
             </div>
           </div>
 
-          <div className="field">
-            <label htmlFor="fSalle">Salle</label>
-            <select
-              id="fSalle"
-              value={form.salleId ?? ''}
-              onChange={(e) => {
-                if (e.target.value === '__nouvelle__') {
-                  setSalleDialogOuvert(true)
-                  setNouvelleSalleNumero(prochainNumeroRomain(salles?.map((s) => s.numero) ?? []))
-                } else {
-                  setForm((f) => ({ ...f, salleId: Number(e.target.value) }))
-                }
-              }}
-            >
-              {salles?.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.numero} · {s.nom}
-                </option>
-              ))}
-              <option value="__nouvelle__">+ Nouvelle salle…</option>
-            </select>
+          <div className="row2">
+            <div className="field">
+              <label htmlFor="fSalle">Salle</label>
+              <select
+                id="fSalle"
+                value={form.salleId ?? ''}
+                onChange={(e) => {
+                  if (e.target.value === '__nouvelle__') {
+                    setSalleDialogOuvert(true)
+                    setNouvelleSalleNumero(prochainNumeroRomain(salles?.map((s) => s.numero) ?? []))
+                  } else {
+                    setForm((f) => ({ ...f, salleId: Number(e.target.value) }))
+                  }
+                }}
+              >
+                {salles?.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.numero} · {s.nom}
+                  </option>
+                ))}
+                <option value="__nouvelle__">+ Nouvelle salle…</option>
+              </select>
+            </div>
+            <div className="field">
+              <label htmlFor="fQuantite">Nombre d&rsquo;exemplaires</label>
+              <div className="stepper">
+                <input
+                  id="fQuantite"
+                  type="number"
+                  min={1}
+                  value={form.quantite}
+                  onChange={(e) => setForm((f) => ({ ...f, quantite: e.target.value }))}
+                />
+                <button type="button" className="stepper-btn stepper-btn--moins" aria-label="Retirer un exemplaire" onClick={() => ajusterQuantite(-1)}>
+                  −
+                </button>
+                <button type="button" className="stepper-btn stepper-btn--plus" aria-label="Ajouter un exemplaire" onClick={() => ajusterQuantite(1)}>
+                  +
+                </button>
+              </div>
+            </div>
           </div>
 
           <div className="row2">
@@ -444,14 +499,14 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
                       placeholder="Du tome n°"
                       aria-label={`${champ.nom} — du tome n°`}
                       value={valeurProgressionDe(champ.nom).du}
-                      onChange={(e) => definirValeurProgression(champ.nom, 'du', Number(e.target.value))}
+                      onChange={(e) => definirValeurProgression(champ.nom, 'du', e.target.value)}
                     />
                     <input
                       type="number"
                       placeholder="Au tome n°"
                       aria-label={`${champ.nom} — au tome n°`}
                       value={valeurProgressionDe(champ.nom).au}
-                      onChange={(e) => definirValeurProgression(champ.nom, 'au', Number(e.target.value))}
+                      onChange={(e) => definirValeurProgression(champ.nom, 'au', e.target.value)}
                     />
                   </div>
                   <label className="switch-row">

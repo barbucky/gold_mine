@@ -5,8 +5,9 @@ import { modifierObjet, supprimerObjet } from '../db/objets'
 import { importerPhoto } from '../db/photos'
 import { Pedestal } from './Pedestal'
 import { FavoriteCoin } from './FavoriteCoin'
+import { PiecesJointes } from './PiecesJointes'
 import { useReducedMotion } from '../lib/useReducedMotion'
-import { trouverProgression, valeurAchat } from '../lib/valeurObjet'
+import { trouverProgression, valeurAchatUnitaire } from '../lib/valeurObjet'
 import type { ValeurProgression } from '../db/types'
 
 const euro = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
@@ -238,7 +239,7 @@ export const ObjectSheet = forwardRef<ObjectSheetHandle, ObjectSheetProps>(funct
 
             <div className="d-meta">
               <span className="it-date">{objet.dateAffichee}</span>
-              <span className="pill">{euro.format(valeurAchat(objet, salle) / 100)}</span>
+              <span className="pill">{euro.format(valeurAchatUnitaire(objet, salle) / 100)}</span>
             </div>
 
             <p className={`d-desc${descOuverte ? '' : ' clamp'}`} ref={descRef}>
@@ -266,6 +267,12 @@ export const ObjectSheet = forwardRef<ObjectSheetHandle, ObjectSheetProps>(funct
                   {salle ? `Salle ${salle.numero} · ${salle.nom}` : ''}
                 </dd>
               </div>
+              {(objet.quantite ?? 1) > 1 && (
+                <div>
+                  <dt>Exemplaires</dt>
+                  <dd>{objet.quantite}</dd>
+                </div>
+              )}
               {objet.anneeCreation != null && (
                 <div>
                   <dt>Année de création</dt>
@@ -318,6 +325,8 @@ export const ObjectSheet = forwardRef<ObjectSheetHandle, ObjectSheetProps>(funct
                 <dd className="mono">Inv. {objet.inventaire}</dd>
               </div>
             </dl>
+
+            <PiecesJointes objetId={objet.id!} onToast={onToast} />
           </div>
         )}
       </div>

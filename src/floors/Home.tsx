@@ -3,7 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/database'
 import { Vitrine } from '../components/Vitrine'
 import { obtenirDerniereSauvegarde } from '../lib/sauvegarde'
-import { trouverProgression, valeurAchat } from '../lib/valeurObjet'
+import { quantiteObjet, trouverProgression, valeurAchatUnitaire } from '../lib/valeurObjet'
 import type { Objet, Salle } from '../db/types'
 
 const euro = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
@@ -54,7 +54,7 @@ function RecentCard({ objet, salle, maintenant, onOpen }: RecentCardProps) {
             <br />
             <span className="r-brand">{objet.marque}</span>
           </span>
-          <span className="r-price">{euro.format(valeurAchat(objet, salle) / 100)}</span>
+          <span className="r-price">{euro.format(valeurAchatUnitaire(objet, salle) / 100)}</span>
         </span>
         <span className="r-desc">{objet.description}</span>
         <span className="r-foot">
@@ -87,8 +87,9 @@ export function Home({ onSeeAll, onOpenObjet, onOpenBackup }: HomeProps) {
   const salutation = heure >= 18 || heure < 5 ? 'Bonsoir' : 'Bonjour'
   const dateDuJour = maintenant.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
 
+  const nombreObjets = objets.reduce((total, o) => total + quantiteObjet(o), 0)
   const debutMois = new Date(maintenant.getFullYear(), maintenant.getMonth(), 1)
-  const ajoutsCeMois = objets.filter((o) => o.creeLe >= debutMois).length
+  const ajoutsCeMois = objets.filter((o) => o.creeLe >= debutMois).reduce((total, o) => total + quantiteObjet(o), 0)
 
   const sallesParId = new Map(salles.map((s) => [s.id, s]))
   const recents = [...objets].sort((a, b) => b.creeLe.getTime() - a.creeLe.getTime()).slice(0, NB_RECENTS)
@@ -114,7 +115,7 @@ export function Home({ onSeeAll, onOpenObjet, onOpenBackup }: HomeProps) {
 
       <div className="kpis">
         <div className="kpi">
-          <b>{objets.length}</b>
+          <b>{nombreObjets}</b>
           <span>objets</span>
         </div>
         <div className="kpi">

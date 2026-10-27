@@ -302,6 +302,28 @@ Format : \*\*décision\*\* — raison / précision. ❌ = option refusée.
 
 &#x20;
 
+\### Nombre d'exemplaires (quantité)
+
+&#x20;
+
+\- \*\*Champ `quantite` (défaut 1)\*\*, distinct du système « progression » (tomes d'une série) : représente des exemplaires \*\*identiques\*\* du même objet (ex. 2 paires de lunettes identiques). Les deux multiplicateurs se cumulent pour la valeur, mais seule la quantité compte dans les indicateurs de nombre d'objets — la progression ne change que la valeur, jamais le nombre d'objets.
+
+\- \*\*Prix unitaire affiché partout sauf les totaux\*\* : la fiche, l'accueil et la liste d'une salle affichent le prix \*\*unitaire\*\* (prix × progression de série le cas échéant, mais pas × quantité). Seuls les totaux (sous-titre de salle, Statistiques) multiplient par la quantité. Décidé après un premier essai qui multipliait partout — jugé trompeur de voir un prix \"gonflé\" sur un seul exemplaire affiché.
+
+&#x20;
+
+\### Documents (factures), étape 13
+
+&#x20;
+
+\- \*\*Nouvelle table `piecesJointes`\*\* (migration Dexie v3, indexée par `objetId`) : plusieurs documents par objet, photo ou PDF uniquement, 15 Mo max chacun. Pas de vignette générée pour les PDF (coûterait une librairie dédiée) ni pour les photos (le fichier original sert directement).
+
+\- \*\*Visualiseur intégré réservé aux photos\*\* : testé sur iPhone, le rendu PDF en `<iframe>` (même avec le paramètre `#view=Fit`) s'affichait toujours zoomé, de façon non corrigible côté CSS — limite du moteur PDF de Safari en contexte iframe. Un PDF ouvre donc directement le partage natif (Fichiers, visionneuse PDF…) au lieu du visualiseur ; les photos restent affichées intégrées (fonctionnait bien dès le premier essai). Partage natif via Web Share API avec fichier, repli sur `window.open` si indisponible — utilisé à la fois pour l'ouverture directe des PDF et comme bouton de secours dans le visualiseur photo.
+
+\- \*\*Sauvegarde étendue (version 2 du format `.zip`)\*\* : les documents sont exportés/importés au même titre que les photos (dossier `documents/` dans l'archive, avec le type MIME d'origine conservé). L'import reste compatible avec les sauvegardes version 1 (sans documents).
+
+&#x20;
+
 \- \*\*Bug corrigé : rectangle sombre pendant la transition ascenseur → salle\*\* : `.lift` (grille `auto 1fr`) réservait une rangée de la hauteur du lintel même quand celui-ci glissait hors champ (transform ne change pas le gabarit de la grille), laissant voir le fond de l'app par transparence. Fond `#050b16` (identique à `.shaft`) ajouté directement sur `.lift` pour combler cette rangée dans tous les cas.
 
 &#x20;

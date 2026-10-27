@@ -7,7 +7,7 @@ import { Vitrine } from '../components/Vitrine'
 import { FavoriteCoin } from '../components/FavoriteCoin'
 import { useReducedMotion } from '../lib/useReducedMotion'
 import { OPTIONS_TRI, trierObjets, type TriCle } from '../lib/triObjets'
-import { trouverProgression, valeurAchat } from '../lib/valeurObjet'
+import { quantiteObjet, trouverProgression, valeurAchat, valeurAchatUnitaire } from '../lib/valeurObjet'
 import type { Objet, Salle } from '../db/types'
 
 const euro = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
@@ -32,7 +32,7 @@ function calculerStats(objets: Objet[], salle: Salle): StatsSalle {
     null,
   )
   return {
-    nombre: objets.length,
+    nombre: objets.reduce((total, o) => total + quantiteObjet(o), 0),
     anneeMin: annees.length ? Math.min(...annees) : null,
     anneeMax: annees.length ? Math.max(...annees) : null,
     dernierAjout: dernierAjout && { nom: dernierAjout.nom, marque: dernierAjout.marque },
@@ -113,6 +113,7 @@ export function Collections({ onOpenObjet, onOpenGestionSalles }: CollectionsPro
 
   const salleOuverte = salles.find((s) => s.id === salleOuverteId) ?? null
   const objetsDeLaSalle = salleOuverte ? trierObjets(objets.filter((o) => o.salleId === salleOuverte.id), tri) : []
+  const nombreDansLaSalle = salleOuverte ? statsParSalle.get(salleOuverte.id!)?.nombre ?? 0 : 0
 
   return (
     <section className="floor">
@@ -166,8 +167,7 @@ export function Collections({ onOpenObjet, onOpenGestionSalles }: CollectionsPro
             <div className="eyebrow">Salle {salleOuverte.numero}</div>
             <h1>{salleOuverte.nom}</h1>
             <p className="room-sub">
-              {objetsDeLaSalle.length} objet{objetsDeLaSalle.length > 1 ? 's' : ''} ·{' '}
-              {euro.format((statsParSalle.get(salleOuverte.id!)?.totalPrixAchat ?? 0) / 100)}
+              {nombreDansLaSalle} objet{nombreDansLaSalle > 1 ? 's' : ''} · {euro.format((statsParSalle.get(salleOuverte.id!)?.totalPrixAchat ?? 0) / 100)}
             </p>
           </div>
           <div className="field">
@@ -191,7 +191,7 @@ export function Collections({ onOpenObjet, onOpenGestionSalles }: CollectionsPro
                     <span className="it-title">{objet.nom}</span>
                     <span className="it-brand">{objet.marque}</span>
                     <span className="it-date">{objet.dateAffichee}</span>
-                    <span className="it-price">{euro.format(valeurAchat(objet, salleOuverte) / 100)}</span>
+                    <span className="it-price">{euro.format(valeurAchatUnitaire(objet, salleOuverte) / 100)}</span>
                   </span>
                 </button>
                 <FavoriteCoin

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/database'
-import { valeurAchat, valeurAchatParAnnee, valeurRevente } from '../lib/valeurObjet'
+import { quantiteObjet, valeurAchat, valeurAchatParAnnee, valeurRevente } from '../lib/valeurObjet'
 import type { Objet, Salle } from '../db/types'
 
 const euro = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
@@ -19,7 +19,7 @@ function calculerLignesParSalle(salles: Salle[], objets: Objet[]): LigneSalle[] 
     const objetsSalle = objets.filter((o) => o.salleId === salle.id)
     return {
       salle,
-      nombre: objetsSalle.length,
+      nombre: objetsSalle.reduce((total, o) => total + quantiteObjet(o), 0),
       totalAchat: objetsSalle.reduce((total, o) => total + valeurAchat(o, salle), 0),
       totalRevente: objetsSalle.reduce((total, o) => total + (valeurRevente(o, salle) ?? 0), 0),
     }
@@ -258,7 +258,7 @@ export function Stats() {
   const lignesParRevente = [...lignes].sort((a, b) => b.totalRevente - a.totalRevente)
   const maxRevente = Math.max(...lignes.map((l) => l.totalRevente), 1)
 
-  const comptesParAnnee = grouperParAnnee(objets, () => 1)
+  const comptesParAnnee = grouperParAnnee(objets, (o) => quantiteObjet(o))
   const maxParAnnee = Math.max(...comptesParAnnee.map(([, n]) => n), 1)
   const totauxAchatParAnnee = grouperValeurAchatEtalee(objets, sallesParId)
 

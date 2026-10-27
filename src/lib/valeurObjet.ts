@@ -13,22 +13,43 @@ export function nombrePossede(progression: ValeurProgression): number {
   return Math.max(1, progression.au - progression.du + 1)
 }
 
-/**
- * Multiplicateur de valeur : nombre de volumes possédés si la salle de l'objet définit un
- * champ personnalisé de type « progression » (ex. une série de mangas où chaque volume vaut
- * le même prix unitaire), sinon 1 (comportement inchangé pour tous les autres objets).
- */
-function multiplicateur(objet: Objet, salle: Salle | undefined): number {
+/** Nombre d'exemplaires identiques possédés de cet objet (ex. 2 paires de lunettes identiques). */
+export function quantiteObjet(objet: Objet): number {
+  return objet.quantite ?? 1
+}
+
+/** Multiplicateur dû à une série (ex. tomes possédés) — n'inclut pas le nombre d'exemplaires. */
+function multiplicateurSerie(objet: Objet, salle: Salle | undefined): number {
   const progression = trouverProgression(objet, salle)
   return progression ? nombrePossede(progression) : 1
 }
 
-/** Valeur d'achat de l'objet (prix unitaire × volumes possédés le cas échéant). */
+/**
+ * Multiplicateur complet : nombre d'exemplaires × nombre de volumes possédés (série). Les deux
+ * se cumulent (ex. 2 coffrets identiques d'une même série), mais seule la quantité compte dans
+ * les indicateurs de nombre d'objets — la progression ne change pas le nombre d'objets.
+ */
+function multiplicateur(objet: Objet, salle: Salle | undefined): number {
+  return quantiteObjet(objet) * multiplicateurSerie(objet, salle)
+}
+
+/** Prix unitaire affiché sur un seul exemplaire (série incluse, quantité exclue). */
+export function valeurAchatUnitaire(objet: Objet, salle: Salle | undefined): number {
+  return objet.prixAchat * multiplicateurSerie(objet, salle)
+}
+
+/** Valeur de revente unitaire, ou `undefined` si non renseignée (série incluse, quantité exclue). */
+export function valeurReventeUnitaire(objet: Objet, salle: Salle | undefined): number | undefined {
+  if (objet.prixRevente == null) return undefined
+  return objet.prixRevente * multiplicateurSerie(objet, salle)
+}
+
+/** Valeur d'achat totale (prix unitaire × série × nombre d'exemplaires) — pour les totaux/statistiques. */
 export function valeurAchat(objet: Objet, salle: Salle | undefined): number {
   return objet.prixAchat * multiplicateur(objet, salle)
 }
 
-/** Valeur de revente potentielle de l'objet, ou `undefined` si non renseignée. */
+/** Valeur de revente totale, ou `undefined` si non renseignée — pour les totaux/statistiques. */
 export function valeurRevente(objet: Objet, salle: Salle | undefined): number | undefined {
   if (objet.prixRevente == null) return undefined
   return objet.prixRevente * multiplicateur(objet, salle)

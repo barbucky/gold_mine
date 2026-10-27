@@ -26,6 +26,8 @@ export type Objet = {
   salleId: number
   nom: string
   marque: string
+  /** Nombre d'exemplaires identiques possédés (ex. 2 paires de lunettes identiques). Défaut 1. */
+  quantite?: number
   /** Texte libre affiché, ex. "Circa 1956". */
   dateAffichee: string
   /** Année de fabrication/création de l'objet (distincte de l'achat), pas toujours connue. */
@@ -59,6 +61,17 @@ export type Photo = {
   largeur: number
   hauteur: number
   estDetouree: boolean
+}
+
+/** Facture/document attaché à un objet (specs.md § 7bis) — photo ou PDF uniquement. */
+export type PieceJointe = {
+  id?: number
+  objetId: number
+  type: 'photo' | 'pdf'
+  fichier: Blob
+  nomFichier: string
+  tailleOctets: number
+  ajouteLe: Date
 }
 
 export type Reglage = {

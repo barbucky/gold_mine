@@ -1,14 +1,23 @@
-// Export / import de sauvegarde (specs.md § 7) : un .zip contenant les données (JSON) et les photos.
+// Export / import de sauvegarde (specs.md § 7) : un .zip contenant les données (JSON), les photos et les documents.
 import { zipSync, unzipSync, type Zippable } from 'fflate'
 import { db } from '../db/database'
-import type { Salle, Objet, Reglage } from '../db/types'
+import type { Salle, Objet, PieceJointe, Reglage } from '../db/types'
 
-const VERSION_SAUVEGARDE = 1
+const VERSION_SAUVEGARDE = 2
 const CLE_DERNIERE_SAUVEGARDE = 'derniereSauvegarde'
 
 type SalleJSON = Omit<Salle, 'creeLe'> & { creeLe: string }
 type ObjetJSON = Omit<Objet, 'creeLe' | 'modifieLe'> & { creeLe: string; modifieLe: string }
 type PhotoMetaJSON = { id: number; objetId: number; largeur: number; hauteur: number; estDetouree: boolean }
+type PieceMetaJSON = {
+  id: number
+  objetId: number
+  type: 'photo' | 'pdf'
+  nomFichier: string
+  tailleOctets: number
+  mimeType: string
+  ajouteLe: string
+}
 
 type DonneesJSON = {
   version: number
@@ -16,6 +25,7 @@ type DonneesJSON = {
   salles: SalleJSON[]
   objets: ObjetJSON[]
   photos: PhotoMetaJSON[]
+  pieces?: PieceMetaJSON[]
   reglages: Reglage[]
 }
 
@@ -27,10 +37,11 @@ export async function obtenirDerniereSauvegarde(): Promise<Date | null> {
 
 /** Génère le .zip et déclenche son téléchargement. */
 export async function exporterSauvegarde(): Promise<void> {
-  const [salles, objets, photos, reglages] = await Promise.all([
+  const [salles, objets, photos, pieces, reglages] = await Promise.all([
     db.salles.toArray(),
     db.objets.toArray(),
     db.photos.toArray(),
+    db.piecesJointes.toArray(),
     db.reglages.toArray(),
   ])
 
@@ -41,6 +52,15 @@ export async function exporterSauvegarde(): Promise<void> {
     salles: salles.map((s) => ({ ...s, creeLe: s.creeLe.toISOString() })),
     objets: objets.map((o) => ({ ...o, creeLe: o.creeLe.toISOString(), modifieLe: o.modifieLe.toISOString() })),
     photos: photos.map((p) => ({ id: p.id!, objetId: p.objetId, largeur: p.largeur, hauteur: p.hauteur, estDetouree: p.estDetouree })),
+    pieces: pieces.map((p) => ({
+      id: p.id!,
+      objetId: p.objetId,
+      type: p.type,
+      nomFichier: p.nomFichier,
+      tailleOctets: p.tailleOctets,
+      mimeType: p.fichier.type,
+      ajouteLe: p.ajouteLe.toISOString(),
+    })),
     reglages: reglages.filter((r) => r.cle !== CLE_DERNIERE_SAUVEGARDE),
   }
 
@@ -55,6 +75,10 @@ export async function exporterSauvegarde(): Promise<void> {
     if (photo.detouree) {
       fichiers[`${dossier}/detouree.png`] = new Uint8Array(await photo.detouree.arrayBuffer())
     }
+  }
+
+  for (const piece of pieces) {
+    fichiers[`documents/${piece.id}/${piece.nomFichier}`] = new Uint8Array(await piece.fichier.arrayBuffer())
   }
 
   const zipOctets = zipSync(fichiers, { level: 6 })
@@ -90,12 +114,12 @@ export async function importerSauvegarde(fichier: File): Promise<void> {
   } catch {
     throw new Error('Fichier de sauvegarde illisible.')
   }
-  if (donnees.version !== VERSION_SAUVEGARDE) {
+  if (donnees.version !== 1 && donnees.version !== VERSION_SAUVEGARDE) {
     throw new Error('Version de sauvegarde non reconnue.')
   }
 
-  await db.transaction('rw', db.salles, db.objets, db.photos, db.reglages, async () => {
-    await Promise.all([db.salles.clear(), db.objets.clear(), db.photos.clear(), db.reglages.clear()])
+  await db.transaction('rw', db.salles, db.objets, db.photos, db.piecesJointes, db.reglages, async () => {
+    await Promise.all([db.salles.clear(), db.objets.clear(), db.photos.clear(), db.piecesJointes.clear(), db.reglages.clear()])
 
     await db.salles.bulkAdd(donnees.salles.map((s) => ({ ...s, creeLe: new Date(s.creeLe) })))
     await db.objets.bulkAdd(donnees.objets.map((o) => ({ ...o, creeLe: new Date(o.creeLe), modifieLe: new Date(o.modifieLe) })))
@@ -117,6 +141,21 @@ export async function importerSauvegarde(fichier: File): Promise<void> {
         miniature: new Blob([miniatureOctets as BlobPart], { type: 'image/jpeg' }),
         detouree: detoureeOctets ? new Blob([detoureeOctets as BlobPart], { type: 'image/png' }) : null,
       })
+    }
+
+    for (const meta of donnees.pieces ?? []) {
+      const octetsFichier = contenu[`documents/${meta.id}/${meta.nomFichier}`]
+      if (!octetsFichier) continue
+      const piece: PieceJointe = {
+        id: meta.id,
+        objetId: meta.objetId,
+        type: meta.type,
+        nomFichier: meta.nomFichier,
+        tailleOctets: meta.tailleOctets,
+        ajouteLe: new Date(meta.ajouteLe),
+        fichier: new Blob([octetsFichier as BlobPart], { type: meta.mimeType }),
+      }
+      await db.piecesJointes.add(piece)
     }
   })
 }
