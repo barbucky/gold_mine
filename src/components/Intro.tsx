@@ -29,7 +29,7 @@ export function Intro({ onFinished }: IntroProps) {
       if (annule || !canvasRef.current) return
 
       scene = createIntroScene(canvasRef.current, {
-        coinTextureUrl: '/coin-texture-1024.png',
+        coinTextureUrl: `${import.meta.env.BASE_URL}coin-texture-1024.png`,
         objets,
         onEnded: (fadeMs) => {
           if (annule) return

@@ -34,7 +34,7 @@ export function FavoriteCoin({ pressed, label, onToggle }: FavoriteCoinProps) {
 
   return (
     <button className="mark" type="button" aria-pressed={pressed} aria-label={label} onClick={handleClick}>
-      <img className="coin" ref={coinRef} src="/favicon-32.png" alt="" width={28} height={28} />
+      <img className="coin" ref={coinRef} src={`${import.meta.env.BASE_URL}favicon-32.png`} alt="" width={28} height={28} />
     </button>
   )
 }

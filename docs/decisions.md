@@ -360,6 +360,8 @@ Format : \*\*décision\*\* — raison / précision. ❌ = option refusée.
 
 \- \*\*Déploiement automatique via GitHub Actions\*\* (`.github/workflows/deploy.yml`) : à chaque push sur `master`, build + publication automatique sur GitHub Pages. Nécessite une seule action manuelle côté utilisateur, une fois : dans les réglages du dépôt GitHub, Pages → Source → « GitHub Actions ».
 
+\- \*\*Bug corrigé : écran noir à l'intro sur GitHub Pages\*\* : `src/components/Intro.tsx` (texture de la pièce dorée) et `src/components/FavoriteCoin.tsx` référençaient leurs images via un chemin absolu codé en dur (`/coin-texture-1024.png`, `/favicon-32.png`) — valide uniquement quand l'app est servie à la racine. Une fois servie sous `/gold_mine/` (GitHub Pages), ces chemins pointaient vers des fichiers inexistants : le chargement de texture échouait silencieusement (promesse rejetée, pas de `.catch()`), empêchant la suite de la construction de la scène 3D. Corrigé avec `import.meta.env.BASE_URL` (fourni par Vite, toujours correct quel que soit l'endroit où l'app est servie) au lieu d'un chemin en dur. `index.html` n'était pas concerné : Vite réécrit automatiquement les chemins absolus qui s'y trouvent au moment du build.
+
 &#x20;
 
 &#x20;
