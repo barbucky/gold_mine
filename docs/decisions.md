@@ -364,5 +364,15 @@ Format : \*\*décision\*\* — raison / précision. ❌ = option refusée.
 
 &#x20;
 
+\### Finitions — chargement différé de Three.js (étape 12)
+
+&#x20;
+
+\- \*\*`estWebglDisponible` déplacée dans `src/intro/webgl.ts`\*\*, un fichier séparé sans dépendance à `three` : elle doit rester importable statiquement (utilisée dès le rendu de `Intro.tsx` pour décider si l'intro doit se jouer) sans entraîner tout Three.js avec elle — ce qui aurait été le cas si elle était restée dans `scene.ts` (`import * as THREE from 'three'` en tête de fichier).
+
+\- \*\*`createIntroScene` chargée via `import()` dynamique\*\*, uniquement au moment où l'intro va réellement se jouer (ni en `prefers-reduced-motion`, ni sans WebGL). Résultat mesuré : le bundle principal passe de 957 Ko à 410 Ko ; Three.js (548 Ko) part dans un fichier séparé (`scene-*.js`), téléchargé en parallèle seulement quand nécessaire. Le type `IntroSceneHandle` reste importé normalement (`import type`), sans coût à l'exécution — seules les valeurs (fonctions/classes) ont un poids en JavaScript, pas les types, effacés à la compilation.
+
+&#x20;
+
 &#x20;
 

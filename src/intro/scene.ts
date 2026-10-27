@@ -6,15 +6,6 @@ import { rng, dessinerMarbre, dessinerPlaque, dessinerTableau, dessinerCartel, d
 import { prepareImage } from '../lib/images'
 import type { ObjetVitrine } from '../db/intro'
 
-export function estWebglDisponible(): boolean {
-  try {
-    const c = document.createElement('canvas')
-    return !!(c.getContext('webgl2') || c.getContext('webgl'))
-  } catch {
-    return false
-  }
-}
-
 export type IntroSceneOptions = {
   /** Appelé une fois (fin naturelle à t > 3,1 s avec 650 ms, ou `skip()` avec 260 ms),
    *  avec la durée de fondu à jouer côté React (specs.md § 4.1). */

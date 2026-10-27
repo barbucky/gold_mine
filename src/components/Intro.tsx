@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef } from 'react'
-import { createIntroScene, estWebglDisponible, type IntroSceneHandle } from '../intro/scene'
+import { estWebglDisponible } from '../intro/webgl'
 import { obtenirObjetsPourIntro } from '../db/intro'
 import { useReducedMotion } from '../lib/useReducedMotion'
+import type { IntroSceneHandle } from '../intro/scene'
 
 type IntroProps = {
   onFinished: () => void
@@ -25,7 +26,9 @@ export function Intro({ onFinished }: IntroProps) {
     let annule = false
     let scene: IntroSceneHandle | null = null
 
-    obtenirObjetsPourIntro().then((objets) => {
+    // Three.js (gros morceau du bundle) n'est chargé qu'à cet instant — pas au chargement
+    // initial de l'app — puisqu'il ne sert qu'ici, et jamais si l'intro est sautée.
+    Promise.all([obtenirObjetsPourIntro(), import('../intro/scene')]).then(([objets, { createIntroScene }]) => {
       if (annule || !canvasRef.current) return
 
       scene = createIntroScene(canvasRef.current, {
