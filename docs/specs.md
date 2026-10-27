@@ -401,7 +401,7 @@ reglages  cle, valeur   (son, introVue, derniereSauvegarde…)
 \- Détection automatique : coins transparents → photo détourée ; sinon → photo avec fond (affichée en tirage à marge claire dans l'intro).
 
 \- Formats acceptés : JPEG, PNG, WebP. Le HEIC n'est pas lu partout : afficher un message clair.
-- image par défaut pour chaque élément en fonction de la catégorie: un vinyle grisé si la collection est cd ou vinyle, une basket grisée si la collection est sneakers, une boite de jeux videos pour video games etc...
+\- \*\*Image par défaut \[finitions]\*\* : un objet sans photo affiche l'icône de sa salle (voir § 4.3, étape 14), grisée et semi-transparente, comme image par défaut — si la salle n'a pas d'icône, la vitrine reste vide comme avant. Remplace l'idée initiale d'illustrations génériques par catégorie (vinyle, basket, boîte de jeu…), redondante maintenant que chaque salle peut avoir son propre logo.
 
 \*\*Détourage :\*\*
 

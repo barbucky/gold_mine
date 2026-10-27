@@ -3,7 +3,10 @@ import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
+const BASE = '/gold_mine/'
+
 export default defineConfig({
+  base: BASE,
   plugins: [
     react(),
     VitePWA({
@@ -14,7 +17,8 @@ export default defineConfig({
         short_name: "Gold Mine",
         description: 'Musée privé de mes collections.',
         lang: 'fr',
-        start_url: '/',
+        start_url: BASE,
+        scope: BASE,
         display: 'standalone',
         orientation: 'portrait',
         background_color: '#08111f',

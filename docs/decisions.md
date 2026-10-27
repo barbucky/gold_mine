@@ -342,5 +342,25 @@ Format : \*\*décision\*\* — raison / précision. ❌ = option refusée.
 
 &#x20;
 
+\### Finitions — état vide des vitrines (étape 12)
+
+&#x20;
+
+\- \*\*Icône de salle réutilisée comme image par défaut\*\*, plutôt que des illustrations génériques par catégorie (abandonné, cf. specs.md § 6) : si un objet n'a pas de photo, sa vitrine (liste, accueil, fiche) affiche l'icône de sa salle, grisée et semi-transparente. Sans icône de salle, la vitrine reste vide comme avant — pas de nouveau placeholder à construire pour ce cas.
+
+&#x20;
+
+\### Mise en ligne pour installation PWA
+
+&#x20;
+
+\- \*\*Hébergement statique gratuit (GitHub Pages) plutôt qu'un hébergement payant\*\* (Hostinger ou équivalent) : l'app n'a aucun besoin serveur (pas de backend, pas de base de données côté serveur — tout est dans IndexedDB sur l'appareil), donc un hébergement payant résoudrait un problème qui n'existe pas ici. Seul besoin réel : une URL en HTTPS, exigée par les Service Workers pour s'activer (une adresse locale en HTTP simple, comme celle utilisée pour les tests via le réseau Wi-Fi, ne suffit pas à l'installation PWA complète).
+
+\- \*\*`base: '/gold_mine/'` dans `vite.config.ts`\*\* (nom du dépôt GitHub `barbucky/gold_mine`) : GitHub Pages sert un dépôt de projet sous `https://<compte>.github.io/<dépôt>/`, pas à la racine. Le `start_url` et le `scope` du manifeste PWA sont alignés sur cette même base. Effet de bord à connaître : les adresses de test local (`npm run dev` / `npm run preview`) incluent désormais ce même préfixe (ex. `http://192.168.1.65:4173/gold_mine/`).
+
+\- \*\*Déploiement automatique via GitHub Actions\*\* (`.github/workflows/deploy.yml`) : à chaque push sur `master`, build + publication automatique sur GitHub Pages. Nécessite une seule action manuelle côté utilisateur, une fois : dans les réglages du dépôt GitHub, Pages → Source → « GitHub Actions ».
+
+&#x20;
+
 &#x20;
 

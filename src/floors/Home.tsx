@@ -46,7 +46,7 @@ function RecentCard({ objet, salle, maintenant, onOpen }: RecentCardProps) {
       onClick={(e) => onOpen(e.currentTarget)}
     >
       <span className="vit">
-        <Vitrine objetId={objet.id} complet={trouverProgression(objet, salle)?.complet} />
+        <Vitrine objetId={objet.id} iconeSalle={salle?.icone} complet={trouverProgression(objet, salle)?.complet} />
       </span>
       <span className="r-body">
         <span className="r-top">

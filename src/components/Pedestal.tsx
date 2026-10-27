@@ -11,14 +11,17 @@ function grainPaths(x: number, y: number, w: number, h: number, n: number) {
 
 type PedestalProps = {
   objetId?: number
+  /** Icône de la salle, utilisée comme image par défaut si l'objet n'a pas de photo. */
+  iconeSalle?: Blob
 }
 
 /** Vitrine sur socle de la fiche objet (specs.md § 4.4). Affiche la photo détourée si
- *  disponible, sinon la photo d'origine. Le `.sheen` reçoit l'animation de reflet jouée
- *  une fois à l'ouverture. */
-export function Pedestal({ objetId }: PedestalProps) {
+ *  disponible, sinon la photo d'origine, sinon l'icône de la salle (grisée). Le `.sheen`
+ *  reçoit l'animation de reflet jouée une fois à l'ouverture. */
+export function Pedestal({ objetId, iconeSalle }: PedestalProps) {
   const photo = useLiveQuery(() => (objetId != null ? db.photos.where('objetId').equals(objetId).first() : undefined), [objetId])
   const url = useObjectUrl(photo?.detouree ?? photo?.originale)
+  const iconeUrl = useObjectUrl(!url ? iconeSalle : undefined)
 
   return (
     <svg viewBox="0 0 260 330" aria-hidden="true">
@@ -67,11 +70,13 @@ export function Pedestal({ objetId }: PedestalProps) {
       <rect x={52} y={40} width={140} height={140} fill="url(#pIn)" />
       <rect x={52} y={40} width={140} height={140} fill="url(#vSpot)" opacity={0.6} />
 
-      {url && (
+      {url ? (
         <>
           <ellipse cx={122} cy={178} rx={44} ry={5} fill="#000" opacity={0.45} />
           <image href={url} x={58} y={48} width={128} height={130} preserveAspectRatio="xMidYMax meet" />
         </>
+      ) : (
+        iconeUrl && <image href={iconeUrl} x={82} y={74} width={80} height={80} opacity={0.5} style={{ filter: 'grayscale(1)' }} />
       )}
 
       <g clipPath="url(#pFace)">

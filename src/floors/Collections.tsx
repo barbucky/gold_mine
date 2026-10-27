@@ -190,7 +190,7 @@ export function Collections({ onOpenObjet, onOpenGestionSalles }: CollectionsPro
               <li className="item" key={objet.id}>
                 <button className="item-open" type="button" onClick={(e) => onOpenObjet(objet.id!, e.currentTarget)}>
                   <span className="vit">
-                    <Vitrine objetId={objet.id} complet={trouverProgression(objet, salleOuverte)?.complet} />
+                    <Vitrine objetId={objet.id} iconeSalle={salleOuverte?.icone} complet={trouverProgression(objet, salleOuverte)?.complet} />
                   </span>
                   <span className="info">
                     <span className="it-title">{objet.nom}</span>

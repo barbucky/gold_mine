@@ -223,7 +223,7 @@ export const ObjectSheet = forwardRef<ObjectSheetHandle, ObjectSheetProps>(funct
         </div>
 
         <div className="stage" ref={stageRef}>
-          <Pedestal objetId={objetId ?? undefined} />
+          <Pedestal objetId={objetId ?? undefined} iconeSalle={salle?.icone} />
         </div>
 
         {objet && (
