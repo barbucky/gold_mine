@@ -5,7 +5,7 @@ export function trouverProgression(objet: Objet, salle: Salle | undefined): Vale
   const champProgression = salle?.champsPersonnalises.find((c) => c.type === 'progression')
   if (!champProgression) return undefined
   const valeur = objet.details[champProgression.nom]
-  return typeof valeur === 'object' && 'du' in valeur && 'au' in valeur ? valeur : undefined
+  return typeof valeur === 'object' && valeur.genre === 'progression' ? valeur : undefined
 }
 
 /** Nombre de tomes possédés (du → au inclus), au moins 1. */

@@ -1,4 +1,4 @@
-export type TypeChamp = 'texte' | 'progression'
+export type TypeChamp = 'texte' | 'progression' | 'association'
 
 export type ChampPersonnalise = {
   nom: string
@@ -6,10 +6,13 @@ export type ChampPersonnalise = {
 }
 
 /** Progression d'une série (ex. mangas) : tomes possédés du n° `du` au n° `au`, et si la série est complète. */
-export type ValeurProgression = { du: number; au: number; complet: boolean }
+export type ValeurProgression = { genre: 'progression'; du: number; au: number; complet: boolean }
 
-/** Valeur d'un champ personnalisé : texte libre, ou progression d'une série. */
-export type ValeurChamp = string | ValeurProgression
+/** Référence vers un autre objet de la collection (ex. la console sur laquelle un jeu fonctionne). */
+export type ValeurAssociation = { genre: 'association'; objetId: number }
+
+/** Valeur d'un champ personnalisé : texte libre, progression d'une série, ou association vers un autre objet. */
+export type ValeurChamp = string | ValeurProgression | ValeurAssociation
 
 export type Salle = {
   id?: number

@@ -114,6 +114,14 @@
   padding-block: 22px calc(104px + env(safe-area-inset-bottom, 0px) + 42px + 14px);
   min-height: 0;
   -webkit-overflow-scrolling: touch;
+  /* Pas de barre de défilement visible (esprit app, pas page web) — évite aussi qu'elle
+     chevauche le bouton flottant « + » posé près du bord droit. */
+  scrollbar-width: none;
+}
+
+.app-main::-webkit-scrollbar,
+.sheet::-webkit-scrollbar {
+  display: none;
 }
 
 .floor {
@@ -795,6 +803,7 @@
   margin-top: calc(env(safe-area-inset-top, 0px) + 10px);
   border-radius: 20px 20px 0 0;
   overflow-y: auto;
+  scrollbar-width: none;
   background: linear-gradient(180deg, #14284a 0%, #0e1c33 45%, #0b1629 100%);
   box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.45);
   padding-left: max(16px, env(safe-area-inset-left, 0px));
@@ -1265,6 +1274,10 @@ form {
   color: #fff;
 }
 
+.mini-dialog--large {
+  max-width: 420px;
+}
+
 .mini-dialog-actions {
   display: flex;
   justify-content: flex-end;
@@ -1577,6 +1590,12 @@ form {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.assoc-picker-list {
+  max-height: 46vh;
+  overflow-y: auto;
+  padding-right: 2px;
 }
 
 /* ---------- Visualiseur de document ---------- */

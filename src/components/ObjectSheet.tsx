@@ -7,8 +7,10 @@ import { Pedestal } from './Pedestal'
 import { FavoriteCoin } from './FavoriteCoin'
 import { PiecesJointes } from './PiecesJointes'
 import { SalleIcone } from './SalleIcone'
+import { Vitrine } from './Vitrine'
 import { useReducedMotion } from '../lib/useReducedMotion'
 import { trouverProgression, valeurAchatUnitaire } from '../lib/valeurObjet'
+import { estAssociation, trouverObjetsLies } from '../lib/associations'
 import type { ValeurProgression } from '../db/types'
 
 const euro = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
@@ -41,9 +43,13 @@ export const ObjectSheet = forwardRef<ObjectSheetHandle, ObjectSheetProps>(funct
 
   const objet = useLiveQuery(() => (objetId !== null ? db.objets.get(objetId) : undefined), [objetId])
   const salle = useLiveQuery(() => (objet ? db.salles.get(objet.salleId) : undefined), [objet])
+  const tousObjets = useLiveQuery(() => db.objets.toArray())
+  const toutesSalles = useLiveQuery(() => db.salles.toArray())
   const champProgression = salle?.champsPersonnalises.find((c) => c.type === 'progression')
   const progression = objet && champProgression ? trouverProgression(objet, salle) : undefined
   const champsTexte = salle?.champsPersonnalises.filter((c) => c.type === 'texte') ?? []
+  const champsAssociation = salle?.champsPersonnalises.filter((c) => c.type === 'association') ?? []
+  const objetsLies = objet && objetId != null && tousObjets ? trouverObjetsLies(tousObjets, objetId) : []
 
   function open(id: number, opener: HTMLElement | null) {
     // Annule toute animation de fermeture encore « figée » (fill: forwards) d'un cycle précédent,
@@ -55,6 +61,15 @@ export const ObjectSheet = forwardRef<ObjectSheetHandle, ObjectSheetProps>(funct
     setMenuOuvert(false)
     setObjetId(id)
     setVisible(true)
+  }
+
+  /** Change l'objet affiché sans rejouer les animations d'ouverture — la fiche reste à l'écran,
+   *  seul son contenu change (ex. tap sur un objet associé ou lié depuis la fiche courante). */
+  function naviguerVersObjet(id: number) {
+    setDescOuverte(false)
+    setMenuOuvert(false)
+    setObjetId(id)
+    closeBtnRef.current?.focus({ preventScroll: true })
   }
 
   useImperativeHandle(ref, () => ({ open }))
@@ -265,7 +280,7 @@ export const ObjectSheet = forwardRef<ObjectSheetHandle, ObjectSheetProps>(funct
               <div>
                 <dt>Emplacement</dt>
                 <dd>
-                  {salle && <SalleIcone salle={salle} />} {salle ? `Salle ${salle.numero} · ${salle.nom}` : ''}
+                  {salle && <SalleIcone salle={salle} />} {salle ? `${salle.numero} · ${salle.nom}` : ''}
                 </dd>
               </div>
               {(objet.quantite ?? 1) > 1 && (
@@ -321,6 +336,22 @@ export const ObjectSheet = forwardRef<ObjectSheetHandle, ObjectSheetProps>(funct
                   </div>
                 )
               })}
+              {champsAssociation.map((champ) => {
+                const valeur = objet.details[champ.nom]
+                if (!estAssociation(valeur)) return null
+                const objetAssocie = tousObjets?.find((o) => o.id === valeur.objetId)
+                if (!objetAssocie) return null
+                return (
+                  <div key={champ.nom}>
+                    <dt>{champ.nom}</dt>
+                    <dd>
+                      <button type="button" className="link" onClick={() => naviguerVersObjet(objetAssocie.id!)}>
+                        {objetAssocie.nom} · {objetAssocie.marque}
+                      </button>
+                    </dd>
+                  </div>
+                )
+              })}
               <div>
                 <dt>Inventaire</dt>
                 <dd className="mono">Inv. {objet.inventaire}</dd>
@@ -328,6 +359,28 @@ export const ObjectSheet = forwardRef<ObjectSheetHandle, ObjectSheetProps>(funct
             </dl>
 
             <PiecesJointes objetId={objet.id!} onToast={onToast} />
+
+            {objetsLies.length > 0 && (
+              <div className="home-sec">
+                <h2>Objets liés</h2>
+                <ul className="piece-list">
+                  {objetsLies.map(({ objet: objetLie, champNom }) => {
+                    const salleDeLObjetLie = toutesSalles?.find((s) => s.id === objetLie.salleId)
+                    return (
+                      <li key={`${champNom}-${objetLie.id}`}>
+                        <button type="button" className="piece-open" onClick={() => naviguerVersObjet(objetLie.id!)}>
+                          <Vitrine objetId={objetLie.id} iconeSalle={salleDeLObjetLie?.icone} taille={44} />
+                          <span className="piece-info">
+                            <span className="piece-nom">{objetLie.nom}</span>
+                            <span className="note">{objetLie.marque}</span>
+                          </span>
+                        </button>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
+            )}
           </div>
         )}
       </div>

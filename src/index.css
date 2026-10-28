@@ -33,7 +33,9 @@ button {
 
 :focus-visible {
   outline: 2px solid var(--brass-hi);
-  outline-offset: 3px;
+  /* Décalage négatif : le contour reste à l'intérieur de l'élément, jamais au-delà
+     (un élément collé au bord de l'écran aurait sinon un contour coupé/débordant). */
+  outline-offset: -2px;
 }
 
 #root {

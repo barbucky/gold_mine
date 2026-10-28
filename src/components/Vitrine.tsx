@@ -8,17 +8,24 @@ type VitrineProps = {
   iconeSalle?: Blob
   /** Série complète (champ personnalisé « progression ») : affiche un ruban doré dans l'angle. */
   complet?: boolean
+  /** Taille en px (carré). Par défaut 104px, défini par `.vit-svg`. */
+  taille?: number
 }
 
 /** Vignette sous vitre (specs.md § 2). Affiche la miniature si une photo a été importée,
  *  sinon l'icône de la salle (grisée) comme image par défaut si elle existe. */
-export function Vitrine({ objetId, iconeSalle, complet }: VitrineProps) {
+export function Vitrine({ objetId, iconeSalle, complet, taille }: VitrineProps) {
   const photo = useLiveQuery(() => (objetId != null ? db.photos.where('objetId').equals(objetId).first() : undefined), [objetId])
   const url = useObjectUrl(photo?.miniature)
   const iconeUrl = useObjectUrl(!url ? iconeSalle : undefined)
 
   return (
-    <svg className="vit-svg" viewBox="0 0 120 120" aria-hidden="true">
+    <svg
+      className="vit-svg"
+      viewBox="0 0 120 120"
+      aria-hidden="true"
+      style={taille ? { width: taille, height: taille } : undefined}
+    >
       <rect width={120} height={120} fill="#10234a" />
       <rect width={120} height={120} fill="url(#vSpot)" opacity={0.55} />
       {url ? (

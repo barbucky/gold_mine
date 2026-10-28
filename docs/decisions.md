@@ -374,5 +374,51 @@ Format : \*\*décision\*\* — raison / précision. ❌ = option refusée.
 
 &#x20;
 
+\### Marques suggérées et filtre par marque
+
+&#x20;
+
+\- \*\*`<datalist>` native plutôt qu'une table dédiée\*\* : les marques suggérées à la création d'un objet viennent directement des marques déjà utilisées dans les objets existants (`[...new Set(...)]`), pas d'une table `marques` séparée à gérer. Suffisant pour le besoin exprimé (uniformiser la saisie, filtrer) ; une table dédiée n'apporterait de valeur que pour un usage non demandé (renommer une marque partout d'un coup).
+
+\- \*\*Filtre par marque dans « Mes collections »\*\*, à côté du tri existant, affiché seulement si la salle ouverte compte plus d'une marque. Réinitialisé à chaque changement de salle.
+
+\- \*\*Filtre par champ personnalisé\*\* : évoqué comme amélioration possible plus tard, pas construit pour l'instant (pas de cas d'usage concret identifié).
+
+&#x20;
+
+\### Associations entre objets (étape 14)
+
+&#x20;
+
+\- \*\*Nouveau type de champ personnalisé « Associations »\*\*, troisième option à côté de Texte et Progression. Un objet peut référencer un autre objet existant de la collection (ex. un jeu → sa console). Valeur stockée : `{ genre: 'association', objetId }` — une référence par identifiant, jamais par nom, pour rester valide même si l'objet référencé est renommé.
+
+\- \*\*Toutes les variantes de `ValeurChamp` portent désormais un tag `genre`\*\* (`'progression'` / `'association'`) plutôt que d'être devinées par les clés présentes (`'du' in valeur`) : plus explicite et plus sûr à mesure que le nombre de variantes grandit.
+
+\- \*\*Sélecteur en deux temps à la saisie\*\* (collection, puis objet dans cette collection, avec vignette+nom+marque pour chaque choix) plutôt qu'une liste déroulante unique sur toute la collection — demandé explicitement : la liste de tous les objets toutes salles confondues serait illisible. Aucune association n'est permanente liée à une salle cible au niveau de la définition du champ ; le choix de collection se fait à chaque saisie de valeur.
+
+\- \*\*Recherche inverse (« Objets liés »)\*\* sur la fiche de l'objet référencé : balaie tous les objets de la collection à la recherche d'un champ association pointant vers lui. Coût négligeable pour une collection personnelle (quelques centaines d'objets au plus).
+
+\- \*\*Navigation interne à la fiche sans rejouer les animations d'ouverture\*\* (`naviguerVersObjet`, distincte de `open()`) : taper sur un objet associé ou lié met à jour le contenu affiché sans refermer/rouvrir le panneau, pour une transition plus douce qu'un aller-retour complet.
+
+&#x20;
+
+\- \*\*Bug corrigé : « + Nouvelle salle… » inactif sur une collection vide\*\* : sans salle existante, cette option devenait la seule du `<select>` « Salle », donc sélectionnée par défaut — taper dessus ne change pas la valeur, et un `<select>` HTML ne déclenche `onChange` que si la valeur sélectionnée change réellement. Corrigé en ajoutant une option vide (« Aucune salle pour l'instant ») qui devient le choix par défaut tant qu'aucune salle n'existe, pour que choisir « + Nouvelle salle… » soit toujours un vrai changement de valeur.
+
+&#x20;
+
+\### Petites finitions visuelles
+
+&#x20;
+
+\- \*\*« Salle » retiré de la ligne Emplacement\*\* sur la fiche objet : le numéro et le nom de la salle suffisent (ex. « I · Appareils photo »), le mot était redondant.
+
+\- \*\*Barres de défilement masquées\*\* (`.app-main`, `.sheet`) : esprit app plutôt que page web, et évite qu'une barre de défilement visible (navigateur desktop, ou indicateur de défilement iOS) chevauche le bouton flottant « + » posé près du bord droit.
+
+\- \*\*Contour de focus (`:focus-visible`) en décalage négatif\*\* (`-2px` au lieu de `+3px`) : le contour doré reste à l'intérieur de l'élément plutôt que de déborder au-delà — un élément collé au bord de l'écran avait sinon un contour visiblement coupé.
+
+\- \*\*Bug corrigé : fond noir sur les vignettes de photos détourées\*\* : `originale` et `miniature` étaient toujours encodées en JPEG dans `db/photos.ts`, quelle que soit la photo — or JPEG n'a pas de canal alpha, donc une photo détourée (fond transparent) voyait sa transparence remplacée par du noir à l'encodage. Seule `detouree` était correctement encodée en PNG, ce qui explique pourquoi la fiche objet (qui utilise `detouree`) affichait la photo correctement alors que les vignettes partout ailleurs (qui utilisent toujours `miniature`) l'affichaient avec un fond noir. Corrigé en encodant `originale` et `miniature` en PNG dès que la photo est détectée comme détourée, au lieu de JPEG systématique. Ne corrige que les \*\*nouveaux\*\* imports — une photo déjà importée avant ce correctif doit être réimportée pour que sa vignette se régénère correctement.
+
+&#x20;
+
 &#x20;
 

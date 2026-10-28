@@ -21,11 +21,16 @@ export async function importerPhoto(objetId: number, file: File) {
 
   const image = await chargerImage(file)
 
-  const { blob: originale, largeur, hauteur } = await redimensionner(image, TAILLE_ORIGINALE, 'image/jpeg', QUALITE_JPEG)
-  const { blob: miniature } = await redimensionner(image, TAILLE_MINIATURE, 'image/jpeg', QUALITE_JPEG)
-
   const { canvas: canvasDetouree, detouree: estDetouree } = prepareImage(image, TAILLE_DETOUREE)
   const detouree = estDetouree ? await canvasVersBlob(canvasDetouree, 'image/png') : null
+
+  // Une photo détourée doit rester en PNG (transparence) à toutes les tailles, pas seulement
+  // pour `detouree` — sinon la miniature (vignettes des listes) perd son fond transparent et
+  // s'affiche avec un fond noir (JPEG n'a pas de canal alpha).
+  const format = estDetouree ? 'image/png' : 'image/jpeg'
+  const qualite = estDetouree ? undefined : QUALITE_JPEG
+  const { blob: originale, largeur, hauteur } = await redimensionner(image, TAILLE_ORIGINALE, format, qualite)
+  const { blob: miniature } = await redimensionner(image, TAILLE_MINIATURE, format, qualite)
 
   const existante = await obtenirPhotoDeLObjet(objetId)
   const donnees = { objetId, originale, detouree, miniature, largeur, hauteur, estDetouree }

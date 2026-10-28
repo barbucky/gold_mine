@@ -252,7 +252,10 @@ export function ManageSallesSheet({ open, onClose, onToast }: ManageSallesSheetP
                 {salleChamps.champsPersonnalises.map((champ) => (
                   <li key={champ.nom}>
                     <span>
-                      {champ.nom} <span className="note">({champ.type === 'progression' ? 'progression' : 'texte'})</span>
+                      {champ.nom}{' '}
+                      <span className="note">
+                        ({champ.type === 'progression' ? 'progression' : champ.type === 'association' ? 'associations' : 'texte'})
+                      </span>
                     </span>
                     <button className="ghost menu-danger" type="button" onClick={() => supprimerChamp(salleChamps, champ.nom)}>
                       Retirer
@@ -271,11 +274,15 @@ export function ManageSallesSheet({ open, onClose, onToast }: ManageSallesSheetP
                 <select id="champType" value={nouveauChampType} onChange={(e) => setNouveauChampType(e.target.value as TypeChamp)}>
                   <option value="texte">Texte</option>
                   <option value="progression">Progression</option>
+                  <option value="association">Associations</option>
                 </select>
               </div>
             </div>
             {nouveauChampType === 'progression' && (
               <p className="note">Pour une série (ex. mangas) : actuel/total de volumes, utilisé aussi pour calculer la valeur totale.</p>
+            )}
+            {nouveauChampType === 'association' && (
+              <p className="note">Pour lier cet objet à un autre de la collection (ex. un jeu → sa console) : à la création de l&rsquo;objet, tu choisiras une collection puis un objet dedans.</p>
             )}
             <div className="mini-dialog-actions">
               <button className="ghost" type="button" onClick={() => setChampsSalleId(null)}>

@@ -1,30 +1,43 @@
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/database'
 import { creerObjet, modifierObjet, genererInventaire } from '../db/objets'
 import { creerSalle, importerIconeSalle } from '../db/salles'
 import { importerPhoto } from '../db/photos'
+import { Vitrine } from './Vitrine'
 import { useReducedMotion } from '../lib/useReducedMotion'
 import { prochainNumeroRomain } from '../lib/romain'
 import type { ChampPersonnalise, ValeurChamp } from '../db/types'
 
 /** Représentation « brouillon » d'un champ progression : du/au en texte libre pendant la saisie
  *  (pour ne pas afficher de 0 forcé quand le champ est vide), converti en nombres à l'enregistrement. */
-type ValeurProgressionFormulaire = { du: string; au: string; complet: boolean }
-type ValeurChampFormulaire = string | ValeurProgressionFormulaire
+type ValeurProgressionFormulaire = { genre: 'progression'; du: string; au: string; complet: boolean }
+/** Brouillon d'une association : `objetId` reste `null` tant que rien n'est choisi dans le sélecteur. */
+type ValeurAssociationFormulaire = { genre: 'association'; objetId: number | null }
+type ValeurChampFormulaire = string | ValeurProgressionFormulaire | ValeurAssociationFormulaire
 
 function estProgressionFormulaire(valeur: ValeurChampFormulaire): valeur is ValeurProgressionFormulaire {
-  return typeof valeur === 'object' && 'du' in valeur
+  return typeof valeur === 'object' && valeur.genre === 'progression'
 }
 
-/** Convertit le brouillon (du/au en texte) en valeurs finales numériques, prêtes pour l'enregistrement. */
+function estAssociationFormulaire(valeur: ValeurChampFormulaire): valeur is ValeurAssociationFormulaire {
+  return typeof valeur === 'object' && valeur.genre === 'association'
+}
+
+/** Convertit le brouillon (du/au en texte, association éventuellement vide) en valeurs finales
+ *  prêtes pour l'enregistrement — une association sans objet choisi n'est pas enregistrée. */
 function versDetailsFinales(details: Record<string, ValeurChampFormulaire>): Record<string, ValeurChamp> {
-  return Object.fromEntries(
-    Object.entries(details).map(([nomChamp, valeur]) => [
-      nomChamp,
-      estProgressionFormulaire(valeur) ? { du: Number(valeur.du) || 1, au: Number(valeur.au) || 1, complet: valeur.complet } : valeur,
-    ]),
-  )
+  const resultat: Record<string, ValeurChamp> = {}
+  for (const [nomChamp, valeur] of Object.entries(details)) {
+    if (estProgressionFormulaire(valeur)) {
+      resultat[nomChamp] = { genre: 'progression', du: Number(valeur.du) || 1, au: Number(valeur.au) || 1, complet: valeur.complet }
+    } else if (estAssociationFormulaire(valeur)) {
+      if (valeur.objetId != null) resultat[nomChamp] = { genre: 'association', objetId: valeur.objetId }
+    } else {
+      resultat[nomChamp] = valeur
+    }
+  }
+  return resultat
 }
 
 export type AddEditSheetHandle = {
@@ -88,6 +101,8 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
   const [nouvelleSalleNumero, setNouvelleSalleNumero] = useState('')
   const [nouvelleSalleNom, setNouvelleSalleNom] = useState('')
   const [nouvelleSalleIcone, setNouvelleSalleIcone] = useState<File | null>(null)
+  const [associationPickerChamp, setAssociationPickerChamp] = useState<string | null>(null)
+  const [associationPickerSalleId, setAssociationPickerSalleId] = useState<number | null>(null)
   const [erreur, setErreur] = useState<string | null>(null)
   const [enregistrement, setEnregistrement] = useState(false)
   // Tant que la date affichée n'a pas été modifiée à la main, elle suit automatiquement
@@ -101,8 +116,15 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
   const openerRef = useRef<HTMLElement | null>(null)
 
   const salles = useLiveQuery(() => db.salles.orderBy('ordre').toArray())
+  const tousObjets = useLiveQuery(() => db.objets.toArray())
   const salleChoisie = salles?.find((s) => s.id === form.salleId)
   const champsSalle: ChampPersonnalise[] = salleChoisie?.champsPersonnalises ?? []
+  const salleAssociationPicker = salles?.find((s) => s.id === associationPickerSalleId)
+  const objetsAssociationPicker = tousObjets?.filter((o) => o.salleId === associationPickerSalleId && o.id !== objetId) ?? []
+  const marquesConnues = useMemo(
+    () => [...new Set((tousObjets ?? []).map((o) => o.marque).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr')),
+    [tousObjets],
+  )
 
   function reinitialiser() {
     setForm({ ...FORMULAIRE_VIDE, salleId: salles?.[0]?.id ?? null })
@@ -111,6 +133,7 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
     setNouvelleSalleNumero('')
     setNouvelleSalleNom('')
     setNouvelleSalleIcone(null)
+    setAssociationPickerChamp(null)
     setErreur(null)
     setDateAfficheeAuto(true)
   }
@@ -151,14 +174,18 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
       reference: objet.reference ?? '',
       description: objet.description,
       details: Object.fromEntries(
-        Object.entries(objet.details).map(([nomChamp, valeur]) => [
-          nomChamp,
-          typeof valeur === 'object' ? { du: valeur.du.toString(), au: valeur.au.toString(), complet: valeur.complet } : valeur,
-        ]),
+        Object.entries(objet.details).map(([nomChamp, valeur]) => {
+          if (typeof valeur !== 'object') return [nomChamp, valeur]
+          if (valeur.genre === 'progression') {
+            return [nomChamp, { genre: 'progression', du: valeur.du.toString(), au: valeur.au.toString(), complet: valeur.complet }]
+          }
+          return [nomChamp, { genre: 'association', objetId: valeur.objetId }]
+        }),
       ),
     })
     setPhotoFile(null)
     setSalleDialogOuvert(false)
+    setAssociationPickerChamp(null)
     setErreur(null)
     setDateAfficheeAuto(objet.dateAffichee === genererDateAffichee(anneeCreation, achatAnnee))
     setVisible(true)
@@ -199,6 +226,8 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
       if (e.key !== 'Escape') return
       if (salleDialogOuvert) {
         setSalleDialogOuvert(false)
+      } else if (associationPickerChamp) {
+        setAssociationPickerChamp(null)
       } else {
         close()
       }
@@ -206,7 +235,7 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible, salleDialogOuvert])
+  }, [visible, salleDialogOuvert, associationPickerChamp])
 
   async function creerNouvelleSalle() {
     if (!nouvelleSalleNumero.trim() || !nouvelleSalleNom.trim() || !salles) return
@@ -238,15 +267,32 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
 
   function valeurProgressionDe(nomChamp: string): ValeurProgressionFormulaire {
     const existante = form.details[nomChamp]
-    return existante && estProgressionFormulaire(existante) ? existante : { du: '', au: '', complet: false }
+    return existante && estProgressionFormulaire(existante) ? existante : { genre: 'progression', du: '', au: '', complet: false }
   }
 
   function definirValeurProgression(nomChamp: string, cle: 'du' | 'au' | 'complet', valeur: string | boolean) {
     setForm((f) => {
       const existante = f.details[nomChamp]
-      const base = existante && estProgressionFormulaire(existante) ? existante : { du: '', au: '', complet: false }
+      const base = existante && estProgressionFormulaire(existante) ? existante : { genre: 'progression' as const, du: '', au: '', complet: false }
       return { ...f, details: { ...f.details, [nomChamp]: { ...base, [cle]: valeur } } }
     })
+  }
+
+  function associationDe(nomChamp: string): ValeurAssociationFormulaire {
+    const existante = form.details[nomChamp]
+    return existante && estAssociationFormulaire(existante) ? existante : { genre: 'association', objetId: null }
+  }
+
+  function choisirAssociation(nomChamp: string, objetId: number) {
+    setForm((f) => ({ ...f, details: { ...f.details, [nomChamp]: { genre: 'association', objetId } } }))
+    setAssociationPickerChamp(null)
+  }
+
+  function ouvrirAssociationPicker(nomChamp: string) {
+    const existante = associationDe(nomChamp)
+    const objetLie = existante.objetId != null ? tousObjets?.find((o) => o.id === existante.objetId) : undefined
+    setAssociationPickerSalleId(objetLie?.salleId ?? null)
+    setAssociationPickerChamp(nomChamp)
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -334,7 +380,17 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
             </div>
             <div className="field">
               <label htmlFor="fMarque">Marque</label>
-              <input id="fMarque" value={form.marque} onChange={(e) => setForm((f) => ({ ...f, marque: e.target.value }))} />
+              <input
+                id="fMarque"
+                list="marques-connues"
+                value={form.marque}
+                onChange={(e) => setForm((f) => ({ ...f, marque: e.target.value }))}
+              />
+              <datalist id="marques-connues">
+                {marquesConnues.map((m) => (
+                  <option key={m} value={m} />
+                ))}
+              </datalist>
             </div>
           </div>
 
@@ -353,6 +409,7 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
                   }
                 }}
               >
+                {(!salles || salles.length === 0) && <option value="">Aucune salle pour l&rsquo;instant</option>}
                 {salles?.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.numero} · {s.nom}
@@ -492,46 +549,72 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
             <textarea id="fNote" value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
           </div>
 
-          {champsSalle.map((champ) => (
-            <div className="field" key={champ.nom}>
-              <label htmlFor={`fChamp-${champ.nom}`}>{champ.nom}</label>
-              {champ.type === 'texte' ? (
-                <input
-                  id={`fChamp-${champ.nom}`}
-                  value={typeof form.details[champ.nom] === 'string' ? (form.details[champ.nom] as string) : ''}
-                  onChange={(e) => definirValeurTexte(champ.nom, e.target.value)}
-                />
-              ) : (
-                <>
-                  <div className="row2">
-                    <input
-                      type="number"
-                      placeholder="Du tome n°"
-                      aria-label={`${champ.nom} — du tome n°`}
-                      value={valeurProgressionDe(champ.nom).du}
-                      onChange={(e) => definirValeurProgression(champ.nom, 'du', e.target.value)}
-                    />
-                    <input
-                      type="number"
-                      placeholder="Au tome n°"
-                      aria-label={`${champ.nom} — au tome n°`}
-                      value={valeurProgressionDe(champ.nom).au}
-                      onChange={(e) => definirValeurProgression(champ.nom, 'au', e.target.value)}
-                    />
-                  </div>
-                  <label className="switch-row">
-                    <span>Série complète</span>
-                    <input
-                      type="checkbox"
-                      role="switch"
-                      checked={valeurProgressionDe(champ.nom).complet}
-                      onChange={(e) => definirValeurProgression(champ.nom, 'complet', e.target.checked)}
-                    />
-                  </label>
-                </>
-              )}
-            </div>
-          ))}
+          {champsSalle.map((champ) => {
+            if (champ.type === 'association') {
+              const assoc = associationDe(champ.nom)
+              const objetChoisi = assoc.objetId != null ? tousObjets?.find((o) => o.id === assoc.objetId) : undefined
+              const salleDeLObjetChoisi = objetChoisi ? salles?.find((s) => s.id === objetChoisi.salleId) : undefined
+              return (
+                <div className="field" key={champ.nom}>
+                  <label htmlFor={`fChamp-${champ.nom}`}>{champ.nom}</label>
+                  <button id={`fChamp-${champ.nom}`} type="button" className="piece-open assoc-choix" onClick={() => ouvrirAssociationPicker(champ.nom)}>
+                    {objetChoisi ? (
+                      <>
+                        <Vitrine objetId={objetChoisi.id} iconeSalle={salleDeLObjetChoisi?.icone} taille={44} />
+                        <span className="piece-info">
+                          <span className="piece-nom">{objetChoisi.nom}</span>
+                          <span className="note">{objetChoisi.marque}</span>
+                        </span>
+                      </>
+                    ) : (
+                      <span className="note">Choisir un objet…</span>
+                    )}
+                  </button>
+                </div>
+              )
+            }
+
+            return (
+              <div className="field" key={champ.nom}>
+                <label htmlFor={`fChamp-${champ.nom}`}>{champ.nom}</label>
+                {champ.type === 'texte' ? (
+                  <input
+                    id={`fChamp-${champ.nom}`}
+                    value={typeof form.details[champ.nom] === 'string' ? (form.details[champ.nom] as string) : ''}
+                    onChange={(e) => definirValeurTexte(champ.nom, e.target.value)}
+                  />
+                ) : (
+                  <>
+                    <div className="row2">
+                      <input
+                        type="number"
+                        placeholder="Du tome n°"
+                        aria-label={`${champ.nom} — du tome n°`}
+                        value={valeurProgressionDe(champ.nom).du}
+                        onChange={(e) => definirValeurProgression(champ.nom, 'du', e.target.value)}
+                      />
+                      <input
+                        type="number"
+                        placeholder="Au tome n°"
+                        aria-label={`${champ.nom} — au tome n°`}
+                        value={valeurProgressionDe(champ.nom).au}
+                        onChange={(e) => definirValeurProgression(champ.nom, 'au', e.target.value)}
+                      />
+                    </div>
+                    <label className="switch-row">
+                      <span>Série complète</span>
+                      <input
+                        type="checkbox"
+                        role="switch"
+                        checked={valeurProgressionDe(champ.nom).complet}
+                        onChange={(e) => definirValeurProgression(champ.nom, 'complet', e.target.checked)}
+                      />
+                    </label>
+                  </>
+                )}
+              </div>
+            )
+          })}
 
           <div className="field">
             <label htmlFor="fPhoto">Photo</label>
@@ -578,6 +661,61 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
               </button>
               <button className="primary" type="button" onClick={creerNouvelleSalle}>
                 Créer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {associationPickerChamp && (
+        <div
+          className="mini-dialog-overlay"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setAssociationPickerChamp(null)
+          }}
+        >
+          <div className="mini-dialog mini-dialog--large">
+            <h3>{associationPickerChamp}</h3>
+            <div className="field">
+              <label htmlFor="assocSalle">Collection</label>
+              <select
+                id="assocSalle"
+                value={associationPickerSalleId ?? ''}
+                onChange={(e) => setAssociationPickerSalleId(e.target.value ? Number(e.target.value) : null)}
+              >
+                <option value="">Choisir une collection…</option>
+                {salles?.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.numero} · {s.nom}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {associationPickerSalleId != null && (
+              <ul className="piece-list assoc-picker-list">
+                {objetsAssociationPicker.length === 0 && <p className="note">Aucun objet dans cette collection.</p>}
+                {objetsAssociationPicker.map((o) => (
+                  <li key={o.id}>
+                    <button
+                      type="button"
+                      className="piece-open"
+                      onClick={() => choisirAssociation(associationPickerChamp, o.id!)}
+                    >
+                      <Vitrine objetId={o.id} iconeSalle={salleAssociationPicker?.icone} taille={44} />
+                      <span className="piece-info">
+                        <span className="piece-nom">{o.nom}</span>
+                        <span className="note">{o.marque}</span>
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <div className="mini-dialog-actions">
+              <button className="ghost" type="button" onClick={() => setAssociationPickerChamp(null)}>
+                Fermer
               </button>
             </div>
           </div>

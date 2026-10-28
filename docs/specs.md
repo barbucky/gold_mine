@@ -294,6 +294,8 @@ Panneau qui monte depuis le bas (460 ms) sur un fond flouté (flou 14 px, voile 
 
 \- \*\*Documents\*\* (étape 13) : section sous le tableau d'informations — liste des factures/documents attachés (photo ou PDF), ajout et suppression depuis la fiche, consultation via un visualiseur plein écran intégré à l'app (secours : bouton « Ouvrir dans une autre app » via partage natif). Voir § 7bis.
 
+\- \*\*Associations\*\* (étape 14) : un champ personnalisé de type « Associations » référence un autre objet de la collection (ex. un jeu → sa console). Affiché comme un lien tappable dans le tableau d'informations. Une section « Objets liés » apparaît en bas de la fiche d'un objet référencé, listant tous les objets qui pointent vers lui (vignette, nom, marque, nom du champ) — tap pour y naviguer sans refermer la fiche.
+
 \- Fermeture : ×, tap hors du panneau, Échap. Le focus revient à l'élément d'origine.
 
 \- Menu « ⋯ » : modifier, déplacer vers une autre salle, partager, supprimer. \*\*\[à concevoir]\*\*
