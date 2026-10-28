@@ -382,6 +382,10 @@ Format : \*\*décision\*\* — raison / précision. ❌ = option refusée.
 
 \- \*\*Filtre par marque dans « Mes collections »\*\*, à côté du tri existant, affiché seulement si la salle ouverte compte plus d'une marque. Réinitialisé à chaque changement de salle.
 
+\- \*\*Indicateurs de la salle ouverte (nombre, total) suivent les filtres actifs\*\*, pas seulement la liste affichée — mention « (filtré) » ajoutée pour que ce ne soit jamais pris pour le total réel de la salle.
+
+\- \*\*Filtre par année d'achat\*\*, même principe que le filtre marque (menu déroulant, sélection exacte — pas de plage), les deux filtres se cumulant (ET logique). Tri et filtres réorganisés : « Trier par » seul au-dessus (ordonne, ne réduit rien), les deux filtres groupés en dessous (réduisent la liste) — distinction volontaire entre les deux familles d'actions.
+
 \- \*\*Filtre par champ personnalisé\*\* : évoqué comme amélioration possible plus tard, pas construit pour l'instant (pas de cas d'usage concret identifié).
 
 &#x20;

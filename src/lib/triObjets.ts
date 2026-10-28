@@ -16,15 +16,15 @@ export type TriCle =
 export const OPTIONS_TRI: { value: TriCle; label: string }[] = [
   { value: 'recent', label: 'Ajout récent → ancien' },
   { value: 'nom', label: 'Nom (A → Z)' },
-  { value: 'anneeAchatDesc', label: "Année d'achat (récente → ancienne)" },
-  { value: 'anneeAchatAsc', label: "Année d'achat (ancienne → récente)" },
-  { value: 'anneeCreationDesc', label: 'Année de création (récente → ancienne)' },
-  { value: 'anneeCreationAsc', label: 'Année de création (ancienne → récente)' },
-  { value: 'prixAchatDesc', label: "Prix d'achat (décroissant)" },
-  { value: 'prixAchatAsc', label: "Prix d'achat (croissant)" },
-  { value: 'prixReventeDesc', label: 'Prix de revente (décroissant)' },
-  { value: 'prixReventeAsc', label: 'Prix de revente (croissant)' },
   { value: 'favoris', label: 'Favoris d’abord' },
+  { value: 'anneeAchatAsc', label: "Année d'achat (ancienne → récente)" },
+  { value: 'anneeAchatDesc', label: "Année d'achat (récente → ancienne)" },
+  { value: 'anneeCreationAsc', label: 'Année de création (ancienne → récente)' },
+  { value: 'anneeCreationDesc', label: 'Année de création (récente → ancienne)' },
+  { value: 'prixAchatAsc', label: "Prix d'achat (croissant)" },
+  { value: 'prixAchatDesc', label: "Prix d'achat (décroissant)" },
+  { value: 'prixReventeAsc', label: 'Prix de revente (croissant)' },
+  { value: 'prixReventeDesc', label: 'Prix de revente (décroissant)' },
 ]
 
 /** Compare deux valeurs numériques potentiellement absentes : les valeurs absentes passent toujours en fin de liste. */

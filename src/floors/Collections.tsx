@@ -45,6 +45,7 @@ export function Collections({ onOpenObjet, onOpenGestionSalles }: CollectionsPro
   const [salleOuverteId, setSalleOuverteId] = useState<number | null>(null)
   const [tri, setTri] = useState<TriCle>('recent')
   const [filtreMarque, setFiltreMarque] = useState<string>('toutes')
+  const [filtreAnnee, setFiltreAnnee] = useState<string>('toutes')
   const reducedMotion = useReducedMotion()
   const estPremierRendu = useRef(true)
   const roomsRef = useRef<HTMLDivElement>(null)
@@ -91,11 +92,13 @@ export function Collections({ onOpenObjet, onOpenGestionSalles }: CollectionsPro
 
   function ouvrirSalle(id: number) {
     setFiltreMarque('toutes')
+    setFiltreAnnee('toutes')
     setSalleOuverteId(id)
   }
 
   function fermerSalle() {
     setFiltreMarque('toutes')
+    setFiltreAnnee('toutes')
     setSalleOuverteId(null)
   }
 
@@ -126,9 +129,16 @@ export function Collections({ onOpenObjet, onOpenGestionSalles }: CollectionsPro
   const salleOuverte = salles.find((s) => s.id === salleOuverteId) ?? null
   const objetsBase = salleOuverte ? objets.filter((o) => o.salleId === salleOuverte.id) : []
   const marquesDeLaSalle = [...new Set(objetsBase.map((o) => o.marque).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'))
-  const objetsFiltres = filtreMarque === 'toutes' ? objetsBase : objetsBase.filter((o) => o.marque === filtreMarque)
+  const anneesDeLaSalle = [...new Set(objetsBase.map((o) => o.achatAnnee).filter((a): a is number => typeof a === 'number'))].sort(
+    (a, b) => a - b,
+  )
+  const objetsFiltres = objetsBase
+    .filter((o) => filtreMarque === 'toutes' || o.marque === filtreMarque)
+    .filter((o) => filtreAnnee === 'toutes' || o.achatAnnee === Number(filtreAnnee))
   const objetsDeLaSalle = trierObjets(objetsFiltres, tri)
-  const nombreDansLaSalle = salleOuverte ? statsParSalle.get(salleOuverte.id!)?.nombre ?? 0 : 0
+  // Les indicateurs de la salle ouverte (nombre, total) suivent le filtre actif — pas le
+  // précompte global de statsParSalle, qui lui reste utile tel quel pour la liste des salles.
+  const statsFiltrees = salleOuverte ? calculerStats(objetsFiltres, salleOuverte) : null
 
   return (
     <section className="floor">
@@ -186,34 +196,51 @@ export function Collections({ onOpenObjet, onOpenGestionSalles }: CollectionsPro
               <SalleIcone salle={salleOuverte} taille={28} /> {salleOuverte.nom}
             </h1>
             <p className="room-sub">
-              {nombreDansLaSalle} objet{nombreDansLaSalle > 1 ? 's' : ''} · {euro.format((statsParSalle.get(salleOuverte.id!)?.totalPrixAchat ?? 0) / 100)}
+              {statsFiltrees?.nombre ?? 0} objet{(statsFiltrees?.nombre ?? 0) > 1 ? 's' : ''} ·{' '}
+              {euro.format((statsFiltrees?.totalPrixAchat ?? 0) / 100)}
+              {(filtreMarque !== 'toutes' || filtreAnnee !== 'toutes') && <span className="note"> (filtré)</span>}
             </p>
           </div>
-          <div className="row2">
-            <div className="field">
-              <label htmlFor="triSelect">Trier par</label>
-              <select id="triSelect" value={tri} onChange={(e) => setTri(e.target.value as TriCle)}>
-                {OPTIONS_TRI.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            {marquesDeLaSalle.length > 1 && (
-              <div className="field">
-                <label htmlFor="filtreMarque">Filtrer par marque</label>
-                <select id="filtreMarque" value={filtreMarque} onChange={(e) => setFiltreMarque(e.target.value)}>
-                  <option value="toutes">Toutes les marques</option>
-                  {marquesDeLaSalle.map((m) => (
-                    <option key={m} value={m}>
-                      {m}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
+          <div className="field">
+            <label htmlFor="triSelect">Trier par</label>
+            <select id="triSelect" value={tri} onChange={(e) => setTri(e.target.value as TriCle)}>
+              {OPTIONS_TRI.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
           </div>
+          {(marquesDeLaSalle.length > 1 || anneesDeLaSalle.length > 1) && (
+            <div className="row2">
+              {marquesDeLaSalle.length > 1 && (
+                <div className="field">
+                  <label htmlFor="filtreMarque">Filtrer par marque</label>
+                  <select id="filtreMarque" value={filtreMarque} onChange={(e) => setFiltreMarque(e.target.value)}>
+                    <option value="toutes">Toutes les marques</option>
+                    {marquesDeLaSalle.map((m) => (
+                      <option key={m} value={m}>
+                        {m}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              {anneesDeLaSalle.length > 1 && (
+                <div className="field">
+                  <label htmlFor="filtreAnnee">Filtrer par année d&rsquo;achat</label>
+                  <select id="filtreAnnee" value={filtreAnnee} onChange={(e) => setFiltreAnnee(e.target.value)}>
+                    <option value="toutes">Toutes les années</option>
+                    {anneesDeLaSalle.map((a) => (
+                      <option key={a} value={a}>
+                        {a}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+          )}
           <ul className="items">
             {objetsDeLaSalle.map((objet) => (
               <li className="item" key={objet.id}>
