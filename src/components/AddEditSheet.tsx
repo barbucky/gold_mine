@@ -103,6 +103,7 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
   const [nouvelleSalleIcone, setNouvelleSalleIcone] = useState<File | null>(null)
   const [associationPickerChamp, setAssociationPickerChamp] = useState<string | null>(null)
   const [associationPickerSalleId, setAssociationPickerSalleId] = useState<number | null>(null)
+  const [marqueFocus, setMarqueFocus] = useState(false)
   const [erreur, setErreur] = useState<string | null>(null)
   const [enregistrement, setEnregistrement] = useState(false)
   // Tant que la date affichée n'a pas été modifiée à la main, elle suit automatiquement
@@ -114,6 +115,7 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
   const sheetRef = useRef<HTMLDivElement>(null)
   const closeBtnRef = useRef<HTMLButtonElement>(null)
   const openerRef = useRef<HTMLElement | null>(null)
+  const photoInputRef = useRef<HTMLInputElement>(null)
 
   const salles = useLiveQuery(() => db.salles.orderBy('ordre').toArray())
   const tousObjets = useLiveQuery(() => db.objets.toArray())
@@ -125,10 +127,17 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
     () => [...new Set((tousObjets ?? []).map((o) => o.marque).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr')),
     [tousObjets],
   )
+  const marquesSuggerees = marquesConnues
+    .filter((m) => m !== form.marque)
+    .filter((m) => !form.marque || m.toLowerCase().includes(form.marque.toLowerCase()))
+    .slice(0, 6)
 
   function reinitialiser() {
     setForm({ ...FORMULAIRE_VIDE, salleId: salles?.[0]?.id ?? null })
     setPhotoFile(null)
+    // Un <input type="file"> ne peut pas être « contrôlé » par React : sans ce reset explicite,
+    // il garderait visuellement le nom du fichier choisi lors d'un item précédent.
+    if (photoInputRef.current) photoInputRef.current.value = ''
     setSalleDialogOuvert(false)
     setNouvelleSalleNumero('')
     setNouvelleSalleNom('')
@@ -184,6 +193,7 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
       ),
     })
     setPhotoFile(null)
+    if (photoInputRef.current) photoInputRef.current.value = ''
     setSalleDialogOuvert(false)
     setAssociationPickerChamp(null)
     setErreur(null)
@@ -378,19 +388,34 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
               <label htmlFor="fNom">Nom de l&rsquo;objet</label>
               <input id="fNom" required value={form.nom} onChange={(e) => setForm((f) => ({ ...f, nom: e.target.value }))} />
             </div>
-            <div className="field">
+            <div className="field champ-autocomplete">
               <label htmlFor="fMarque">Marque</label>
               <input
                 id="fMarque"
-                list="marques-connues"
+                autoComplete="off"
                 value={form.marque}
                 onChange={(e) => setForm((f) => ({ ...f, marque: e.target.value }))}
+                onFocus={() => setMarqueFocus(true)}
+                onBlur={() => setTimeout(() => setMarqueFocus(false), 150)}
               />
-              <datalist id="marques-connues">
-                {marquesConnues.map((m) => (
-                  <option key={m} value={m} />
-                ))}
-              </datalist>
+              {marqueFocus && marquesSuggerees.length > 0 && (
+                <ul className="autocomplete-liste">
+                  {marquesSuggerees.map((m) => (
+                    <li key={m}>
+                      <button
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => {
+                          setForm((f) => ({ ...f, marque: m }))
+                          setMarqueFocus(false)
+                        }}
+                      >
+                        {m}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           </div>
 
@@ -618,7 +643,13 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
 
           <div className="field">
             <label htmlFor="fPhoto">Photo</label>
-            <input id="fPhoto" type="file" accept="image/*" onChange={(e) => setPhotoFile(e.target.files?.[0] ?? null)} />
+            <input
+              id="fPhoto"
+              ref={photoInputRef}
+              type="file"
+              accept="image/*"
+              onChange={(e) => setPhotoFile(e.target.files?.[0] ?? null)}
+            />
           </div>
 
           {erreur && <p className="note" style={{ color: '#e2887f' }}>{erreur}</p>}

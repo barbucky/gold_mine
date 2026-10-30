@@ -424,5 +424,17 @@ Format : \*\*décision\*\* — raison / précision. ❌ = option refusée.
 
 &#x20;
 
+\### Retours d'usage — marque, photo du formulaire, aération « Mes collections »
+
+&#x20;
+
+\- \*\*Bug corrigé : suggestions de marque invisibles sur iPhone\*\* : le `<datalist>` natif (ajouté à l'étape « Marques suggérées et filtre par marque ») ne fait tout simplement pas apparaître son menu déroulant de suggestions sur Safari iOS pour un champ texte — limite connue de WebKit, pas un bug du code. Remplacé par un composant d'auto-complétion fait main (liste déroulante positionnée sous le champ, ouverte au focus/fermée au blur), sur le même modèle visuel que le menu « ⋯ » déjà existant.
+
+\- \*\*Bug corrigé : la photo du formulaire d'ajout persistait visuellement d'un objet à l'autre\*\* : un `<input type="file">` ne peut pas être piloté par React — remettre l'état (`photoFile`) à `null` ne vide pas l'affichage natif du nom de fichier choisi. Corrigé en gardant une référence (`ref`) directe sur l'input et en forçant `input.value = ''` à chaque réinitialisation du formulaire (nouvel objet) et à chaque ouverture en modification.
+
+\- \*\*Aération de « Mes collections »\*\* : les blocs d'une salle ouverte (en-tête, tri, filtres, liste) et la liste des salles n'avaient pas d'espacement vertical cohérent entre eux (divs sans classe). Réutilisation de `.floor` (`display:grid; gap:22px`), déjà utilisée pour ce même rôle dans Statistiques, plutôt que d'inventer une nouvelle classe.
+
+&#x20;
+
 &#x20;
 

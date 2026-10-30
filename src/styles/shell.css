@@ -840,6 +840,44 @@
   fill: currentColor;
 }
 
+.champ-autocomplete {
+  position: relative;
+}
+
+.autocomplete-liste {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 3;
+  display: grid;
+  max-height: 180px;
+  overflow-y: auto;
+  background: var(--wall-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+
+.autocomplete-liste button {
+  width: 100%;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  padding: 10px 14px;
+  text-align: left;
+  font: 500 14px var(--font-body);
+  color: var(--fg);
+  cursor: pointer;
+}
+
+.autocomplete-liste li:last-child button {
+  border-bottom: 0;
+}
+
 /* ---------- Menu « ⋯ » ---------- */
 .menu-wrap {
   position: relative;

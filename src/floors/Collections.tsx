@@ -143,7 +143,7 @@ export function Collections({ onOpenObjet, onOpenGestionSalles }: CollectionsPro
   return (
     <section className="floor">
       {!salleOuverte && (
-        <div ref={roomsRef}>
+        <div className="floor" ref={roomsRef}>
           <div className="sec-head">
             <h1>Mes collections</h1>
             <button className="link" type="button" onClick={onOpenGestionSalles}>
@@ -186,7 +186,7 @@ export function Collections({ onOpenObjet, onOpenGestionSalles }: CollectionsPro
       )}
 
       {salleOuverte && (
-        <div ref={roomRef}>
+        <div className="floor" ref={roomRef}>
           <div className="room-head">
             <button className="back" type="button" onClick={fermerSalle}>
               ‹ Mes collections
