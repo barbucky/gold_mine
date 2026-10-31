@@ -378,8 +378,8 @@
 /* ---------- Vitrine sous vitre ---------- */
 .vit-svg {
   display: block;
-  width: 104px;
-  height: 104px;
+  width: 128px;
+  height: 128px;
   border-radius: 2px;
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35);
 }
@@ -543,7 +543,7 @@
 
 .item-open {
   display: grid;
-  grid-template-columns: 104px minmax(0, 1fr);
+  grid-template-columns: 128px minmax(0, 1fr);
   gap: 16px;
   align-items: start;
   background: none;
@@ -619,7 +619,7 @@
 
 .wish-link {
   font-size: 13px;
-  margin-left: 120px;
+  margin-left: 144px;
 }
 
 .wish-check {

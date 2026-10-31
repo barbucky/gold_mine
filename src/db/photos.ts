@@ -4,7 +4,8 @@ import type { Photo } from './types'
 
 const TAILLE_ORIGINALE = 2048
 const TAILLE_DETOUREE = 1024
-const TAILLE_MINIATURE = 300
+// 400px couvre une vignette affichée à 128px CSS jusqu'à ~3x (écrans Retina), sans viser l'original.
+const TAILLE_MINIATURE = 400
 const QUALITE_JPEG = 0.85
 
 export function obtenirPhotoDeLObjet(objetId: number) {
