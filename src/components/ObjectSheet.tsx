@@ -9,7 +9,7 @@ import { PiecesJointes } from './PiecesJointes'
 import { SalleIcone } from './SalleIcone'
 import { Vitrine } from './Vitrine'
 import { useReducedMotion } from '../lib/useReducedMotion'
-import { trouverProgression, valeurAchatUnitaire } from '../lib/valeurObjet'
+import { trouverProgression } from '../lib/valeurObjet'
 import { estAssociation, trouverObjetsLies } from '../lib/associations'
 import type { ValeurProgression } from '../db/types'
 
@@ -255,7 +255,7 @@ export const ObjectSheet = forwardRef<ObjectSheetHandle, ObjectSheetProps>(funct
 
             <div className="d-meta">
               <span className="it-date">{objet.dateAffichee}</span>
-              <span className="pill">{euro.format(valeurAchatUnitaire(objet, salle) / 100)}</span>
+              <span className="pill">{euro.format(objet.prixAchat / 100)}</span>
             </div>
 
             <p className={`d-desc${descOuverte ? '' : ' clamp'}`} ref={descRef}>

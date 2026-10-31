@@ -525,6 +525,15 @@
   font-size: 14px;
 }
 
+.wish-total {
+  font-size: 16px;
+}
+
+.wish-total strong {
+  font-weight: 700;
+  color: #fff;
+}
+
 .items {
   list-style: none;
   margin: 0;

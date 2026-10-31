@@ -458,3 +458,17 @@ Format : \*\*décision\*\* — raison / précision. ❌ = option refusée.
 
 \- \*\*Bug corrigé : étage Wishlist qui plantait toute l'app à l'ouverture\*\* (`SchemaError: KeyPath creeLe on object store souhaits is not indexed`) : le schéma Dexie v4 indexait `souhaits` uniquement par `salleId`, alors que `floors/Wishlist.tsx` trie la liste par date d'ajout (`orderBy('creeLe')`) — un champ non indexé ne peut pas servir de clé de tri côté IndexedDB. Une erreur non interceptée pendant le rendu démonte tout l'arbre React (aucune limite d'erreur posée) : l'ascenseur fermait ses portes puis restait bloqué fermé, l'app entière disparaissant derrière un fond bleu vide. Corrigé en \*\*version 5\*\* du schéma (`souhaits: '++id, salleId, creeLe'`) — une nouvelle version était nécessaire plutôt qu'une correction de la v4 en place, le navigateur de test ayant déjà créé la v4 cassée localement.
 
+&#x20;
+
+\### Finitions — vignettes, résolution photo, prix d'une série
+
+&#x20;
+
+\- \*\*Vignettes agrandies\*\* (104 → 128 px) dans « Mes collections » et la Wishlist, pour mieux distinguer les objets d'un coup d'œil. L'accueil garde sa propre taille (`.rcard .vit-svg`), non concerné.
+
+\- \*\*Miniature stockée à 400 px\*\* (au lieu de 300) pour rester nette sur écran Retina ×3 à la nouvelle taille d'affichage (128 px). Ne s'applique qu'aux \*\*nouvelles\*\* photos importées, comme pour les précédents ajustements du pipeline photo.
+
+\- \*\*Prix d'une série « progression » : séparé entre liste et fiche\*\* — jusqu'ici `valeurAchatUnitaire` (prix × volumes possédés) servait à la fois dans « Mes collections », l'accueil \*\*et\*\* la fiche objet, ce qui masquait le prix réellement entré par volume. Désormais la fiche objet affiche `objet.prixAchat` brut (le prix d'un volume, tel que saisi) ; « Mes collections » et l'accueil continuent d'afficher le total de la série (`valeurAchatUnitaire`, inchangé) — ex. 12 tomes à 10 € : 120 € dans les listes, 10 € sur la fiche.
+
+\- \*\*Total de la Wishlist mis en valeur\*\* : police légèrement agrandie, seule la valeur du total en gras (pas le nombre de souhaits) — cohérent avec `.it-price` ailleurs dans l'app. Le total suivait déjà le filtre par collection (calculé sur la liste filtrée), pas seulement l'affichage visuel.
+

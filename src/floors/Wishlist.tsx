@@ -38,8 +38,8 @@ export function Wishlist({ onOpenSouhait, onAchete }: WishlistProps) {
         <p className="note">Aucun souhait pour l&rsquo;instant.</p>
       ) : (
         <>
-          <p className="room-sub">
-            {souhaitsFiltres.length} souhait{souhaitsFiltres.length > 1 ? 's' : ''} · {euro.format(totalPrixAchat / 100)}
+          <p className="room-sub wish-total">
+            {souhaitsFiltres.length} souhait{souhaitsFiltres.length > 1 ? 's' : ''} · <strong>{euro.format(totalPrixAchat / 100)}</strong>
           </p>
 
           {sallesDesSouhaits.length > 1 && (
