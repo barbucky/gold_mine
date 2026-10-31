@@ -140,7 +140,7 @@ New Rocker n'est utilisée que pour cette icône statique, jamais dans l'interfa
 
 &#x20;
 
-Trois étages, boutons d'appel ronds dorés en pied de page (le bouton actif s'illumine) :
+Quatre étages, boutons d'appel ronds dorés en pied de page (le bouton actif s'illumine) :
 
 &#x20;
 
@@ -152,7 +152,9 @@ Trois étages, boutons d'appel ronds dorés en pied de page (le bouton actif s'i
 
 | 1 | 1er étage | Mes collections |
 
-| 2 | 2e étage | Statistiques |
+| 2 | 2e étage | Wishlist |
+
+| 3 | 3e étage | Statistiques |
 
 &#x20;
 
@@ -312,7 +314,23 @@ Panneau qui monte depuis le bas (460 ms) sur un fond flouté (flou 14 px, voile 
 
 &#x20;
 
-\### 4.6 Statistiques (2) \[à concevoir]
+\### 4.6 Wishlist (2) \[validé] (étape 15)
+
+&#x20;
+
+Liste à plat (pas de navigation par salle) des objets souhaités, pas encore acquis. Même visuel de carte que « Mes collections » (vignette, nom puis marque, prix), plus une étiquette indiquant la collection visée et un lien « Voir en ligne » si une URL produit a été renseignée.
+
+&#x20;
+
+\- \*\*Formulaire d'ajout réduit\*\* (popup dédiée, pas la fiche classique) : Nom, Marque (autocomplétion partagée avec le formulaire classique), Salle visée (avec « + Nouvelle salle… »), Prix d'achat visé, Visualisation (URL produit — propre à la wishlist, perdue à la conversion), Photo.
+
+\- \*\*Case « Acheté »\*\* sur chaque carte : l'enfoncer ouvre directement le formulaire classique d'ajout d'objet (§ 3), prérempli (nom, marque, salle, prix, photo reprise sans réimport). Le souhait n'est supprimé qu'à l'enregistrement réel du nouvel objet — fermer le formulaire sans l'enregistrer laisse le souhait intact dans la wishlist.
+
+\- Suppression d'un souhait : depuis son formulaire de modification (pas de suppression accidentelle en un tap depuis la liste).
+
+&#x20;
+
+\### 4.7 Statistiques (3) \[à concevoir]
 
 &#x20;
 
@@ -320,7 +338,7 @@ Base de la maquette : barres « objets par salle », colonnes « acquisitions pa
 
 &#x20;
 
-\### 4.7 Sauvegarde \[à concevoir]
+\### 4.8 Sauvegarde \[à concevoir]
 
 &#x20;
 
@@ -360,9 +378,13 @@ objets    id, salleId, nom, marque, dateAffichee ("Circa 1956"),
 
 &#x20;         {actuel, total} si "progression" — ex. {"Club":"PSG", "Volumes":{"actuel":6,"total":25}})
 
-photos    id, objetId, originale (Blob), detouree (Blob | null), miniature (Blob),
+photos    id, objetId? (xor souhaitId?), originale (Blob), detouree (Blob | null), miniature (Blob),
 
 &#x20;         largeur, hauteur, estDetouree (bool)
+
+souhaits  id, nom, marque, salleId (collection visée), prixAchat (centimes, EUR),
+
+&#x20;         visualisation? (URL produit), creeLe   — wishlist (étape 15), converti en objet à l'achat
 
 reglages  cle, valeur   (son, introVue, derniereSauvegarde…)
 
@@ -490,6 +512,8 @@ Chaque étape se termine par un test sur téléphone et un commit.
 | 11 | Statistiques | Chiffres justes et à l'échelle |
 
 | 12 | Finitions : accessibilité, performances, états vides | Pas de régression sur les étapes précédentes |
+
+| 15 | Wishlist : nouvel étage, formulaire réduit, conversion en objet à l'achat | Un souhait coché « Acheté » devient un objet de la collection visée, photo reprise |
 
 &#x20;
 

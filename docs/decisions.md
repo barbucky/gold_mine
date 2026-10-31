@@ -436,5 +436,25 @@ Format : \*\*décision\*\* — raison / précision. ❌ = option refusée.
 
 &#x20;
 
+\### Wishlist, nouvel étage (étape 15)
+
 &#x20;
+
+\- \*\*Table Dexie `souhaits` séparée de `objets`\*\* (schéma v4), plutôt qu'un objet classique marqué par un indicateur « souhait » : un souhait n'a que 5 champs (nom, marque, salle visée, prix visé, visualisation), très loin des ~15 champs d'un objet (inventaire, provenance, description, champs personnalisés…). Mélanger les deux aurait obligé à exclure les souhaits de chaque calcul existant (totaux, statistiques, accueil, filtres) au lieu de bénéficier de cette séparation gratuitement.
+
+\- \*\*Liste à plat\*\*, sans navigation par salle façon « Mes collections » : une wishlist se consulte comme une liste de courses, pas comme un musée organisé par vitrines. La salle visée reste visible comme simple étiquette sur chaque carte.
+
+\- \*\*Champ « Visualisation » (URL produit) propre à la wishlist\*\*, pas repris sur l'objet classique : perdu volontairement à la conversion plutôt que d'ajouter un champ permanent à tous les objets pour un usage qui n'a de sens qu'avant l'achat.
+
+\- \*\*Conversion différée à l'enregistrement\*\* : cocher « Acheté » ouvre directement le formulaire classique (`AddEditSheet.openFromSouhait`) prérempli (nom, marque, salle, prix, photo reprise sans réimport via `copierPhotoSouhaitVersObjet`), mais le souhait n'est supprimé qu'au moment où l'objet est réellement enregistré — fermer le formulaire sans enregistrer laisse le souhait intact. Évite de perdre un souhait pour un simple tap accidentel sur la case.
+
+\- \*\*`Photo.objetId` et `Photo.souhaitId` optionnels et mutuellement exclusifs\*\* sur la même table (plutôt qu'une table de photos dédiée à la wishlist) : la logique de traitement d'image (redimensionnement, détection de détourage) est strictement identique pour les deux, seule la clé étrangère change.
+
+\- \*\*Champ Marque et sélecteur de Salle (avec « + Nouvelle salle… ») extraits en composants partagés\*\* (`ChampMarque`, `ChampSalle`) entre le formulaire classique et celui de la wishlist : la logique (autocomplétion, création de salle à la volée avec icône) était jusqu'ici interne à `AddEditSheet` — l'utiliser une seconde fois sans dupliquer ~130 lignes justifiait l'extraction.
+
+\- \*\*Ascenseur à nouveau sur 4 étages\*\* (R, Collections, Wishlist, Statistiques) : coïncidence utile, le CSS du pied de page était resté en grille à 4 colonnes depuis l'étage « Ajouter » de la maquette d'origine (retiré à l'étape 1) — les boutons se recentrent donc sans aucune retouche de style.
+
+\- \*\*Robustesse sauvegarde (version 4 du format `.zip`)\*\* : les souhaits et leurs photos sont exportés/importés comme le reste. Au passage, le nom de fichier d'une photo dans l'archive reflète maintenant son encodage réel (`.png` pour une photo détourée, `.jpg` sinon) au lieu d'un `.jpg` systématique — et l'import accepte les deux extensions pour rester compatible avec les sauvegardes antérieures.
+
+\- \*\*Bug corrigé : étage Wishlist qui plantait toute l'app à l'ouverture\*\* (`SchemaError: KeyPath creeLe on object store souhaits is not indexed`) : le schéma Dexie v4 indexait `souhaits` uniquement par `salleId`, alors que `floors/Wishlist.tsx` trie la liste par date d'ajout (`orderBy('creeLe')`) — un champ non indexé ne peut pas servir de clé de tri côté IndexedDB. Une erreur non interceptée pendant le rendu démonte tout l'arbre React (aucune limite d'erreur posée) : l'ascenseur fermait ses portes puis restait bloqué fermé, l'app entière disparaissant derrière un fond bleu vide. Corrigé en \*\*version 5\*\* du schéma (`souhaits: '++id, salleId, creeLe'`) — une nouvelle version était nécessaire plutôt qu'une correction de la v4 en place, le navigateur de test ayant déjà créé la v4 cassée localement.
 

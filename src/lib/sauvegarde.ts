@@ -1,14 +1,15 @@
 // Export / import de sauvegarde (specs.md § 7) : un .zip contenant les données (JSON), les photos et les documents.
 import { zipSync, unzipSync, type Zippable } from 'fflate'
 import { db } from '../db/database'
-import type { Salle, Objet, PieceJointe, Reglage } from '../db/types'
+import type { Salle, Objet, PieceJointe, Reglage, Souhait } from '../db/types'
 
-const VERSION_SAUVEGARDE = 3
+const VERSION_SAUVEGARDE = 4
 const CLE_DERNIERE_SAUVEGARDE = 'derniereSauvegarde'
 
 type SalleJSON = Omit<Salle, 'creeLe' | 'icone'> & { creeLe: string }
 type ObjetJSON = Omit<Objet, 'creeLe' | 'modifieLe'> & { creeLe: string; modifieLe: string }
-type PhotoMetaJSON = { id: number; objetId: number; largeur: number; hauteur: number; estDetouree: boolean }
+type SouhaitJSON = Omit<Souhait, 'creeLe'> & { creeLe: string }
+type PhotoMetaJSON = { id: number; objetId?: number; souhaitId?: number; largeur: number; hauteur: number; estDetouree: boolean }
 type PieceMetaJSON = {
   id: number
   objetId: number
@@ -26,6 +27,7 @@ type DonneesJSON = {
   objets: ObjetJSON[]
   photos: PhotoMetaJSON[]
   pieces?: PieceMetaJSON[]
+  souhaits?: SouhaitJSON[]
   reglages: Reglage[]
 }
 
@@ -37,11 +39,12 @@ export async function obtenirDerniereSauvegarde(): Promise<Date | null> {
 
 /** Génère le .zip et déclenche son téléchargement. */
 export async function exporterSauvegarde(): Promise<void> {
-  const [salles, objets, photos, pieces, reglages] = await Promise.all([
+  const [salles, objets, photos, pieces, souhaits, reglages] = await Promise.all([
     db.salles.toArray(),
     db.objets.toArray(),
     db.photos.toArray(),
     db.piecesJointes.toArray(),
+    db.souhaits.toArray(),
     db.reglages.toArray(),
   ])
 
@@ -54,7 +57,14 @@ export async function exporterSauvegarde(): Promise<void> {
       return { ...reste, creeLe: s.creeLe.toISOString() }
     }),
     objets: objets.map((o) => ({ ...o, creeLe: o.creeLe.toISOString(), modifieLe: o.modifieLe.toISOString() })),
-    photos: photos.map((p) => ({ id: p.id!, objetId: p.objetId, largeur: p.largeur, hauteur: p.hauteur, estDetouree: p.estDetouree })),
+    photos: photos.map((p) => ({
+      id: p.id!,
+      objetId: p.objetId,
+      souhaitId: p.souhaitId,
+      largeur: p.largeur,
+      hauteur: p.hauteur,
+      estDetouree: p.estDetouree,
+    })),
     pieces: pieces.map((p) => ({
       id: p.id!,
       objetId: p.objetId,
@@ -64,6 +74,7 @@ export async function exporterSauvegarde(): Promise<void> {
       mimeType: p.fichier.type,
       ajouteLe: p.ajouteLe.toISOString(),
     })),
+    souhaits: souhaits.map((s) => ({ ...s, creeLe: s.creeLe.toISOString() })),
     reglages: reglages.filter((r) => r.cle !== CLE_DERNIERE_SAUVEGARDE),
   }
 
@@ -73,8 +84,10 @@ export async function exporterSauvegarde(): Promise<void> {
 
   for (const photo of photos) {
     const dossier = `photos/${photo.id}`
-    fichiers[`${dossier}/originale.jpg`] = new Uint8Array(await photo.originale.arrayBuffer())
-    fichiers[`${dossier}/miniature.jpg`] = new Uint8Array(await photo.miniature.arrayBuffer())
+    // L'extension suit l'encodage réel (PNG pour une photo détourée — transparence — sinon JPEG).
+    const ext = photo.estDetouree ? 'png' : 'jpg'
+    fichiers[`${dossier}/originale.${ext}`] = new Uint8Array(await photo.originale.arrayBuffer())
+    fichiers[`${dossier}/miniature.${ext}`] = new Uint8Array(await photo.miniature.arrayBuffer())
     if (photo.detouree) {
       fichiers[`${dossier}/detouree.png`] = new Uint8Array(await photo.detouree.arrayBuffer())
     }
@@ -104,6 +117,20 @@ export async function exporterSauvegarde(): Promise<void> {
   await db.reglages.put({ cle: CLE_DERNIERE_SAUVEGARDE, valeur: exporteLe })
 }
 
+/** Cherche un fichier de photo quelle que soit son extension (.png ou .jpg) — les sauvegardes
+ *  antérieures à cette version écrivaient toujours « .jpg », même pour une photo détourée (PNG). */
+function trouverFichierPhoto(
+  contenu: Record<string, Uint8Array>,
+  dossier: string,
+  base: string,
+): { octets: Uint8Array; mime: string } | null {
+  const png = contenu[`${dossier}/${base}.png`]
+  if (png) return { octets: png, mime: 'image/png' }
+  const jpg = contenu[`${dossier}/${base}.jpg`]
+  if (jpg) return { octets: jpg, mime: 'image/jpeg' }
+  return null
+}
+
 /** Remplace entièrement les données actuelles par le contenu du .zip. */
 export async function importerSauvegarde(fichier: File): Promise<void> {
   const octets = new Uint8Array(await fichier.arrayBuffer())
@@ -127,11 +154,21 @@ export async function importerSauvegarde(fichier: File): Promise<void> {
     throw new Error('Version de sauvegarde non reconnue.')
   }
 
-  await db.transaction('rw', db.salles, db.objets, db.photos, db.piecesJointes, db.reglages, async () => {
-    await Promise.all([db.salles.clear(), db.objets.clear(), db.photos.clear(), db.piecesJointes.clear(), db.reglages.clear()])
+  await db.transaction('rw', [db.salles, db.objets, db.photos, db.piecesJointes, db.souhaits, db.reglages], async () => {
+    await Promise.all([
+      db.salles.clear(),
+      db.objets.clear(),
+      db.photos.clear(),
+      db.piecesJointes.clear(),
+      db.souhaits.clear(),
+      db.reglages.clear(),
+    ])
 
     await db.salles.bulkAdd(donnees.salles.map((s) => ({ ...s, creeLe: new Date(s.creeLe) })))
     await db.objets.bulkAdd(donnees.objets.map((o) => ({ ...o, creeLe: new Date(o.creeLe), modifieLe: new Date(o.modifieLe) })))
+    if (donnees.souhaits?.length) {
+      await db.souhaits.bulkAdd(donnees.souhaits.map((s) => ({ ...s, creeLe: new Date(s.creeLe) })))
+    }
     if (donnees.reglages.length) await db.reglages.bulkAdd(donnees.reglages)
 
     for (const salle of donnees.salles) {
@@ -143,18 +180,19 @@ export async function importerSauvegarde(fichier: File): Promise<void> {
 
     for (const meta of donnees.photos) {
       const dossier = `photos/${meta.id}`
-      const originaleOctets = contenu[`${dossier}/originale.jpg`]
-      const miniatureOctets = contenu[`${dossier}/miniature.jpg`]
+      const originale = trouverFichierPhoto(contenu, dossier, 'originale')
+      const miniature = trouverFichierPhoto(contenu, dossier, 'miniature')
       const detoureeOctets = contenu[`${dossier}/detouree.png`]
-      if (!originaleOctets || !miniatureOctets) continue
+      if (!originale || !miniature) continue
       await db.photos.add({
         id: meta.id,
         objetId: meta.objetId,
+        souhaitId: meta.souhaitId,
         largeur: meta.largeur,
         hauteur: meta.hauteur,
         estDetouree: meta.estDetouree,
-        originale: new Blob([originaleOctets as BlobPart], { type: 'image/jpeg' }),
-        miniature: new Blob([miniatureOctets as BlobPart], { type: 'image/jpeg' }),
+        originale: new Blob([originale.octets as BlobPart], { type: originale.mime }),
+        miniature: new Blob([miniature.octets as BlobPart], { type: miniature.mime }),
         detouree: detoureeOctets ? new Blob([detoureeOctets as BlobPart], { type: 'image/png' }) : null,
       })
     }

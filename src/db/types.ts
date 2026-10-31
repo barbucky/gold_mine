@@ -57,15 +57,31 @@ export type Objet = {
   details: Record<string, ValeurChamp>
 }
 
+/** Photo d'un objet de collection OU d'un souhait (wishlist) — les deux champs sont mutuellement exclusifs. */
 export type Photo = {
   id?: number
-  objetId: number
+  objetId?: number
+  souhaitId?: number
   originale: Blob
   detouree: Blob | null
   miniature: Blob
   largeur: number
   hauteur: number
   estDetouree: boolean
+}
+
+/** Objet souhaité (wishlist, étape 15) — pas encore acquis. Converti en `Objet` à l'achat. */
+export type Souhait = {
+  id?: number
+  nom: string
+  marque: string
+  /** Collection visée une fois l'objet acheté. */
+  salleId: number
+  /** Centimes, EUR — prix visé. */
+  prixAchat: number
+  /** URL vers la page du produit (boutique, annonce…), propre à la wishlist. */
+  visualisation?: string
+  creeLe: Date
 }
 
 /** Facture/document attaché à un objet (specs.md § 7bis) — photo ou PDF uniquement. */

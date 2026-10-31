@@ -2,11 +2,12 @@ import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState }
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/database'
 import { creerObjet, modifierObjet, genererInventaire } from '../db/objets'
-import { creerSalle, importerIconeSalle } from '../db/salles'
-import { importerPhoto } from '../db/photos'
+import { importerPhoto, copierPhotoSouhaitVersObjet } from '../db/photos'
+import { obtenirSouhait, supprimerSouhait } from '../db/souhaits'
 import { Vitrine } from './Vitrine'
+import { ChampMarque } from './ChampMarque'
+import { ChampSalle } from './ChampSalle'
 import { useReducedMotion } from '../lib/useReducedMotion'
-import { prochainNumeroRomain } from '../lib/romain'
 import type { ChampPersonnalise, ValeurChamp } from '../db/types'
 
 /** Représentation « brouillon » d'un champ progression : du/au en texte libre pendant la saisie
@@ -43,6 +44,10 @@ function versDetailsFinales(details: Record<string, ValeurChampFormulaire>): Rec
 export type AddEditSheetHandle = {
   openForNew: (opener: HTMLElement | null) => void
   openForEdit: (objetId: number, opener: HTMLElement | null) => void
+  /** Ouvre le formulaire classique prérempli depuis un souhait (wishlist) coché « Acheté ».
+   *  Le souhait n'est supprimé qu'à l'enregistrement réel de l'objet — fermer sans enregistrer
+   *  laisse le souhait intact. */
+  openFromSouhait: (souhaitId: number, opener: HTMLElement | null) => void
 }
 
 type AddEditSheetProps = {
@@ -97,13 +102,11 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
   const [objetId, setObjetId] = useState<number | null>(null)
   const [form, setForm] = useState<EtatFormulaire>(FORMULAIRE_VIDE)
   const [photoFile, setPhotoFile] = useState<File | null>(null)
-  const [salleDialogOuvert, setSalleDialogOuvert] = useState(false)
-  const [nouvelleSalleNumero, setNouvelleSalleNumero] = useState('')
-  const [nouvelleSalleNom, setNouvelleSalleNom] = useState('')
-  const [nouvelleSalleIcone, setNouvelleSalleIcone] = useState<File | null>(null)
   const [associationPickerChamp, setAssociationPickerChamp] = useState<string | null>(null)
   const [associationPickerSalleId, setAssociationPickerSalleId] = useState<number | null>(null)
-  const [marqueFocus, setMarqueFocus] = useState(false)
+  /** Non nul quand ce formulaire a été ouvert depuis un souhait coché « Acheté » (wishlist) —
+   *  à l'enregistrement, le souhait d'origine est supprimé et sa photo reprise sans réimport. */
+  const [souhaitOrigineId, setSouhaitOrigineId] = useState<number | null>(null)
   const [erreur, setErreur] = useState<string | null>(null)
   const [enregistrement, setEnregistrement] = useState(false)
   // Tant que la date affichée n'a pas été modifiée à la main, elle suit automatiquement
@@ -127,10 +130,6 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
     () => [...new Set((tousObjets ?? []).map((o) => o.marque).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr')),
     [tousObjets],
   )
-  const marquesSuggerees = marquesConnues
-    .filter((m) => m !== form.marque)
-    .filter((m) => !form.marque || m.toLowerCase().includes(form.marque.toLowerCase()))
-    .slice(0, 6)
 
   function reinitialiser() {
     setForm({ ...FORMULAIRE_VIDE, salleId: salles?.[0]?.id ?? null })
@@ -138,11 +137,8 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
     // Un <input type="file"> ne peut pas être « contrôlé » par React : sans ce reset explicite,
     // il garderait visuellement le nom du fichier choisi lors d'un item précédent.
     if (photoInputRef.current) photoInputRef.current.value = ''
-    setSalleDialogOuvert(false)
-    setNouvelleSalleNumero('')
-    setNouvelleSalleNom('')
-    setNouvelleSalleIcone(null)
     setAssociationPickerChamp(null)
+    setSouhaitOrigineId(null)
     setErreur(null)
     setDateAfficheeAuto(true)
   }
@@ -154,6 +150,26 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
     setMode('new')
     setObjetId(null)
     reinitialiser()
+    setVisible(true)
+  }
+
+  async function openFromSouhait(souhaitId: number, opener: HTMLElement | null) {
+    const souhait = await obtenirSouhait(souhaitId)
+    if (!souhait) return
+    overlayRef.current?.getAnimations().forEach((a) => a.cancel())
+    sheetRef.current?.getAnimations().forEach((a) => a.cancel())
+    openerRef.current = opener
+    setMode('new')
+    setObjetId(null)
+    reinitialiser()
+    setForm((f) => ({
+      ...f,
+      nom: souhait.nom,
+      marque: souhait.marque,
+      salleId: souhait.salleId,
+      prixAchat: (souhait.prixAchat / 100).toString(),
+    }))
+    setSouhaitOrigineId(souhaitId)
     setVisible(true)
   }
 
@@ -194,14 +210,14 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
     })
     setPhotoFile(null)
     if (photoInputRef.current) photoInputRef.current.value = ''
-    setSalleDialogOuvert(false)
     setAssociationPickerChamp(null)
+    setSouhaitOrigineId(null)
     setErreur(null)
     setDateAfficheeAuto(objet.dateAffichee === genererDateAffichee(anneeCreation, achatAnnee))
     setVisible(true)
   }
 
-  useImperativeHandle(ref, () => ({ openForNew, openForEdit }))
+  useImperativeHandle(ref, () => ({ openForNew, openForEdit, openFromSouhait }))
 
   async function close() {
     if (!visible) return
@@ -234,9 +250,7 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
     if (!visible) return
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return
-      if (salleDialogOuvert) {
-        setSalleDialogOuvert(false)
-      } else if (associationPickerChamp) {
+      if (associationPickerChamp) {
         setAssociationPickerChamp(null)
       } else {
         close()
@@ -245,24 +259,7 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible, salleDialogOuvert, associationPickerChamp])
-
-  async function creerNouvelleSalle() {
-    if (!nouvelleSalleNumero.trim() || !nouvelleSalleNom.trim() || !salles) return
-    const id = await creerSalle({ numero: nouvelleSalleNumero.trim(), nom: nouvelleSalleNom.trim(), ordre: salles.length, champsPersonnalises: [] })
-    if (nouvelleSalleIcone) {
-      try {
-        await importerIconeSalle(id, nouvelleSalleIcone)
-      } catch (err) {
-        onToast(err instanceof Error ? err.message : 'Impossible d’importer cette icône.')
-      }
-    }
-    setForm((f) => ({ ...f, salleId: id }))
-    setSalleDialogOuvert(false)
-    setNouvelleSalleNumero('')
-    setNouvelleSalleNom('')
-    setNouvelleSalleIcone(null)
-  }
+  }, [visible, associationPickerChamp])
 
   function ajusterQuantite(delta: number) {
     setForm((f) => {
@@ -347,9 +344,17 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
 
       if (photoFile && idCible) {
         await importerPhoto(idCible, photoFile)
+      } else if (souhaitOrigineId && idCible) {
+        // Pas de nouveau fichier choisi : on reprend la photo déjà traitée du souhait, sans réimport.
+        await copierPhotoSouhaitVersObjet(souhaitOrigineId, idCible)
       }
 
-      onToast(mode === 'new' ? 'Objet inventorié.' : 'Objet modifié.')
+      if (souhaitOrigineId) {
+        await supprimerSouhait(souhaitOrigineId)
+        onToast('Objet acheté et ajouté à la collection.')
+      } else {
+        onToast(mode === 'new' ? 'Objet inventorié.' : 'Objet modifié.')
+      }
       await close()
     } catch (err) {
       setErreur(err instanceof Error ? err.message : 'Impossible d’enregistrer cet objet.')
@@ -373,7 +378,7 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
       <div className="sheet" ref={sheetRef}>
         <div className="sheet-bar">
           <h2 className="d-name" id="formTitre" style={{ fontSize: 20 }}>
-            {mode === 'new' ? 'Inventorier un objet' : "Modifier l'objet"}
+            {souhaitOrigineId ? 'Finaliser l’achat' : mode === 'new' ? 'Inventorier un objet' : "Modifier l'objet"}
           </h2>
           <button className="round" type="button" aria-label="Fermer" ref={closeBtnRef} onClick={close}>
             <svg viewBox="0 0 20 20" aria-hidden="true">
@@ -388,61 +393,11 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
               <label htmlFor="fNom">Nom de l&rsquo;objet</label>
               <input id="fNom" required value={form.nom} onChange={(e) => setForm((f) => ({ ...f, nom: e.target.value }))} />
             </div>
-            <div className="field champ-autocomplete">
-              <label htmlFor="fMarque">Marque</label>
-              <input
-                id="fMarque"
-                autoComplete="off"
-                value={form.marque}
-                onChange={(e) => setForm((f) => ({ ...f, marque: e.target.value }))}
-                onFocus={() => setMarqueFocus(true)}
-                onBlur={() => setTimeout(() => setMarqueFocus(false), 150)}
-              />
-              {marqueFocus && marquesSuggerees.length > 0 && (
-                <ul className="autocomplete-liste">
-                  {marquesSuggerees.map((m) => (
-                    <li key={m}>
-                      <button
-                        type="button"
-                        onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => {
-                          setForm((f) => ({ ...f, marque: m }))
-                          setMarqueFocus(false)
-                        }}
-                      >
-                        {m}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+            <ChampMarque value={form.marque} onChange={(v) => setForm((f) => ({ ...f, marque: v }))} marquesConnues={marquesConnues} />
           </div>
 
           <div className="row2">
-            <div className="field">
-              <label htmlFor="fSalle">Salle</label>
-              <select
-                id="fSalle"
-                value={form.salleId ?? ''}
-                onChange={(e) => {
-                  if (e.target.value === '__nouvelle__') {
-                    setSalleDialogOuvert(true)
-                    setNouvelleSalleNumero(prochainNumeroRomain(salles?.map((s) => s.numero) ?? []))
-                  } else {
-                    setForm((f) => ({ ...f, salleId: Number(e.target.value) }))
-                  }
-                }}
-              >
-                {(!salles || salles.length === 0) && <option value="">Aucune salle pour l&rsquo;instant</option>}
-                {salles?.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.numero} · {s.nom}
-                  </option>
-                ))}
-                <option value="__nouvelle__">+ Nouvelle salle…</option>
-              </select>
-            </div>
+            <ChampSalle value={form.salleId} onChange={(id) => setForm((f) => ({ ...f, salleId: id }))} onToast={onToast} />
             <div className="field">
               <label htmlFor="fQuantite">Nombre d&rsquo;exemplaires</label>
               <div className="stepper">
@@ -655,48 +610,10 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
           {erreur && <p className="note" style={{ color: '#e2887f' }}>{erreur}</p>}
 
           <button className="primary" type="submit" disabled={enregistrement} style={{ justifySelf: 'center' }}>
-            {mode === 'new' ? 'Inventorier' : 'Enregistrer'}
+            {souhaitOrigineId ? 'Finaliser l’achat' : mode === 'new' ? 'Inventorier' : 'Enregistrer'}
           </button>
         </form>
       </div>
-
-      {salleDialogOuvert && (
-        <div
-          className="mini-dialog-overlay"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setSalleDialogOuvert(false)
-          }}
-        >
-          <div className="mini-dialog">
-            <h3>Nouvelle salle</h3>
-            <div className="field">
-              <label htmlFor="fSalleNumero">N° de la salle</label>
-              <input id="fSalleNumero" value={nouvelleSalleNumero} onChange={(e) => setNouvelleSalleNumero(e.target.value)} />
-            </div>
-            <div className="field">
-              <label htmlFor="fSalleNom">Nom de la salle</label>
-              <input id="fSalleNom" autoFocus value={nouvelleSalleNom} onChange={(e) => setNouvelleSalleNom(e.target.value)} />
-            </div>
-            <div className="field">
-              <label htmlFor="fSalleIcone">Icône (optionnel)</label>
-              <input
-                id="fSalleIcone"
-                type="file"
-                accept="image/svg+xml,image/png,image/jpeg,image/webp"
-                onChange={(e) => setNouvelleSalleIcone(e.target.files?.[0] ?? null)}
-              />
-            </div>
-            <div className="mini-dialog-actions">
-              <button className="ghost" type="button" onClick={() => setSalleDialogOuvert(false)}>
-                Annuler
-              </button>
-              <button className="primary" type="button" onClick={creerNouvelleSalle}>
-                Créer
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {associationPickerChamp && (
         <div

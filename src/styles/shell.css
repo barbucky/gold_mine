@@ -139,6 +139,18 @@
   letter-spacing: -0.02em;
 }
 
+/* Étage Wishlist : même lueur dorée que son formulaire — identité visuelle cohérente
+   pour toute la fonctionnalité, distincte des autres étages. */
+.floor--wishlist {
+  background: radial-gradient(130% 60% at 50% 0%, rgba(201, 164, 92, 0.32), transparent 72%) no-repeat;
+  margin-top: -22px;
+  padding-top: 22px;
+}
+
+.floor--wishlist h1 {
+  color: var(--brass-hi);
+}
+
 .note {
   font-size: 13px;
   color: var(--muted);
@@ -558,6 +570,13 @@
   display: block;
 }
 
+/* Un chip (ex. étiquette de salle visée, Wishlist) garde sa largeur au contenu au
+ * lieu d'être étiré en pleine largeur par la règle ci-dessus. */
+.info > .chip {
+  display: inline-flex;
+  justify-self: start;
+}
+
 .it-title {
   font-family: var(--font-display);
   font-weight: 600;
@@ -589,6 +608,44 @@
   color: #fff;
   margin-top: 8px;
   font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Wishlist ---------- */
+.item-wishlist-body {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.wish-link {
+  font-size: 13px;
+  margin-left: 120px;
+}
+
+.wish-check {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  justify-self: end;
+  background: none;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+
+.wish-check svg {
+  width: 14px;
+  height: 14px;
+}
+
+.wish-check:hover {
+  color: var(--brass-hi);
+  border-color: var(--brass-hi);
+  background: rgba(201, 164, 92, 0.12);
 }
 
 /* ---------- Panneau d'appel ---------- */
@@ -809,6 +866,16 @@
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 28px);
+}
+
+/* Formulaire Wishlist : même fond que les autres fiches, plus une lueur dorée en
+   haut et une bordure or — distingue ce formulaire du formulaire classique sans
+   sortir de la palette bleu nuit + or. */
+.sheet--wishlist {
+  background:
+    radial-gradient(140% 75% at 50% 0%, rgba(201, 164, 92, 0.42), transparent 72%),
+    linear-gradient(180deg, #14284a 0%, #0e1c33 45%, #0b1629 100%);
+  border-top: 3px solid var(--brass);
 }
 
 .sheet-bar {

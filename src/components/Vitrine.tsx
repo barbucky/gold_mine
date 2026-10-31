@@ -4,6 +4,8 @@ import { useObjectUrl } from '../lib/useObjectUrl'
 
 type VitrineProps = {
   objetId?: number
+  /** Souhait (wishlist) — mutuellement exclusif avec `objetId`. */
+  souhaitId?: number
   /** Icône de la salle, utilisée comme image par défaut si l'objet n'a pas de photo. */
   iconeSalle?: Blob
   /** Série complète (champ personnalisé « progression ») : affiche un ruban doré dans l'angle. */
@@ -14,8 +16,12 @@ type VitrineProps = {
 
 /** Vignette sous vitre (specs.md § 2). Affiche la miniature si une photo a été importée,
  *  sinon l'icône de la salle (grisée) comme image par défaut si elle existe. */
-export function Vitrine({ objetId, iconeSalle, complet, taille }: VitrineProps) {
-  const photo = useLiveQuery(() => (objetId != null ? db.photos.where('objetId').equals(objetId).first() : undefined), [objetId])
+export function Vitrine({ objetId, souhaitId, iconeSalle, complet, taille }: VitrineProps) {
+  const photo = useLiveQuery(() => {
+    if (objetId != null) return db.photos.where('objetId').equals(objetId).first()
+    if (souhaitId != null) return db.photos.where('souhaitId').equals(souhaitId).first()
+    return undefined
+  }, [objetId, souhaitId])
   const url = useObjectUrl(photo?.miniature)
   const iconeUrl = useObjectUrl(!url ? iconeSalle : undefined)
 

@@ -13,14 +13,16 @@ export function Header({ floor, onReplayIntro, onOpenBackup }: HeaderProps) {
       <div className="floor-tag">
         {floor.level} · {floor.name}
       </div>
-      <div className="tools">
-        <button className="ghost" type="button" onClick={onOpenBackup}>
-          Sauvegarde
-        </button>
-        <button className="ghost" type="button" onClick={onReplayIntro}>
-          Rejouer l&rsquo;intro
-        </button>
-      </div>
+      {floor.key === 'R' && (
+        <div className="tools">
+          <button className="ghost" type="button" onClick={onOpenBackup}>
+            Sauvegarde
+          </button>
+          <button className="ghost" type="button" onClick={onReplayIntro}>
+            Rejouer l&rsquo;intro
+          </button>
+        </div>
+      )}
     </header>
   )
 }
