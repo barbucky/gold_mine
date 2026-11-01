@@ -91,6 +91,7 @@ export function Collections({ onOpenObjet, onOpenGestionSalles }: CollectionsPro
   const [tri, setTri] = useState<TriCle>('recent')
   const [filtreMarque, setFiltreMarque] = useState<string>('toutes')
   const [filtreAnnee, setFiltreAnnee] = useState<string>('toutes')
+  const [filtresChamps, setFiltresChamps] = useState<Record<string, string>>({})
   const reducedMotion = useReducedMotion()
   const estPremierRendu = useRef(true)
   const roomsRef = useRef<HTMLDivElement>(null)
@@ -152,12 +153,14 @@ export function Collections({ onOpenObjet, onOpenGestionSalles }: CollectionsPro
   function ouvrirSalle(id: number) {
     setFiltreMarque('toutes')
     setFiltreAnnee('toutes')
+    setFiltresChamps({})
     setSalleOuverteId(id)
   }
 
   function fermerSalle() {
     setFiltreMarque('toutes')
     setFiltreAnnee('toutes')
+    setFiltresChamps({})
     setSalleOuverteId(null)
   }
 
@@ -191,13 +194,27 @@ export function Collections({ onOpenObjet, onOpenGestionSalles }: CollectionsPro
   const anneesDeLaSalle = [...new Set(objetsBase.map((o) => o.achatAnnee).filter((a): a is number => typeof a === 'number'))].sort(
     (a, b) => a - b,
   )
+  // Filtre par champ personnalisé : uniquement les champs de type Texte (une « Progression »
+  // ou une « Association » n'ont pas de valeur discrète simple à proposer dans un menu).
+  const champsTexteDeLaSalle = (salleOuverte?.champsPersonnalises ?? []).filter((c) => c.type === 'texte')
+  const valeursParChamp = new Map(
+    champsTexteDeLaSalle.map((champ) => [
+      champ.nom,
+      [...new Set(objetsBase.map((o) => o.details[champ.nom]).filter((v): v is string => typeof v === 'string' && v !== ''))].sort(
+        (a, b) => a.localeCompare(b, 'fr'),
+      ),
+    ]),
+  )
+  const filtresChampsActifs = champsTexteDeLaSalle.filter((champ) => (filtresChamps[champ.nom] ?? 'toutes') !== 'toutes')
   const objetsFiltres = objetsBase
     .filter((o) => filtreMarque === 'toutes' || o.marque === filtreMarque)
     .filter((o) => filtreAnnee === 'toutes' || o.achatAnnee === Number(filtreAnnee))
+    .filter((o) => filtresChampsActifs.every((champ) => o.details[champ.nom] === filtresChamps[champ.nom]))
   const objetsDeLaSalle = trierObjets(objetsFiltres, tri)
   // Les indicateurs de la salle ouverte (nombre, total) suivent le filtre actif — pas le
   // précompte global de statsParSalle, qui lui reste utile tel quel pour la liste des salles.
   const statsFiltrees = salleOuverte ? calculerStats(objetsFiltres, salleOuverte) : null
+  const filtreActif = filtreMarque !== 'toutes' || filtreAnnee !== 'toutes' || filtresChampsActifs.length > 0
 
   return (
     <section className="floor">
@@ -234,7 +251,7 @@ export function Collections({ onOpenObjet, onOpenGestionSalles }: CollectionsPro
             <p className="room-sub">
               {statsFiltrees?.nombre ?? 0} objet{(statsFiltrees?.nombre ?? 0) > 1 ? 's' : ''} ·{' '}
               {euro.format((statsFiltrees?.totalPrixAchat ?? 0) / 100)}
-              {(filtreMarque !== 'toutes' || filtreAnnee !== 'toutes') && <span className="note"> (filtré)</span>}
+              {filtreActif && <span className="note"> (filtré)</span>}
             </p>
           </div>
           <div className="field">
@@ -247,7 +264,9 @@ export function Collections({ onOpenObjet, onOpenGestionSalles }: CollectionsPro
               ))}
             </select>
           </div>
-          {(marquesDeLaSalle.length > 1 || anneesDeLaSalle.length > 1) && (
+          {(marquesDeLaSalle.length > 1 ||
+            anneesDeLaSalle.length > 1 ||
+            champsTexteDeLaSalle.some((champ) => (valeursParChamp.get(champ.nom)?.length ?? 0) > 1)) && (
             <div className="row2">
               {marquesDeLaSalle.length > 1 && (
                 <div className="field">
@@ -275,6 +294,27 @@ export function Collections({ onOpenObjet, onOpenGestionSalles }: CollectionsPro
                   </select>
                 </div>
               )}
+              {champsTexteDeLaSalle.map((champ) => {
+                const valeurs = valeursParChamp.get(champ.nom) ?? []
+                if (valeurs.length <= 1) return null
+                return (
+                  <div className="field" key={champ.nom}>
+                    <label htmlFor={`filtreChamp-${champ.nom}`}>Filtrer par {champ.nom.toLowerCase()}</label>
+                    <select
+                      id={`filtreChamp-${champ.nom}`}
+                      value={filtresChamps[champ.nom] ?? 'toutes'}
+                      onChange={(e) => setFiltresChamps((f) => ({ ...f, [champ.nom]: e.target.value }))}
+                    >
+                      <option value="toutes">Toutes les valeurs</option>
+                      {valeurs.map((v) => (
+                        <option key={v} value={v}>
+                          {v}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )
+              })}
             </div>
           )}
           <ul className="items">

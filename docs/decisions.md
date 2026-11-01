@@ -522,4 +522,24 @@ Format : \*\*décision\*\* — raison / précision. ❌ = option refusée.
 
 \- \*\*Réordonnancement désactivé si un filtre par collection est actif\*\* (`useSortable({ disabled })`, poignée grisée) : glisser un souhait dans une liste filtrée serait ambigu (où l'insérer dans la liste complète non filtrée ?) — on ne réordonne que la liste entière, sans filtre.
 
+&#x20;
+
+\### Filtre par champ personnalisé (demandé après coup, étape 21)
+
+&#x20;
+
+\- \*\*Limité aux champs de type Texte\*\* : une « Progression » ou une « Association » n'ont pas de valeur discrète simple à proposer dans un menu déroulant comme marque/année — seuls les champs Texte (ex. « Groupe » sur une salle CD) proposent un filtre. Comble la décision laissée ouverte à l'étape « Marques suggérées et filtre par marque » (« pas de cas d'usage concret identifié ») : l'usage concret est arrivé avec les champs personnalisés texte réutilisés (étape 17).
+
+\- \*\*Un menu par champ Texte défini sur la salle\*\*, affiché seulement si ce champ compte plus d'une valeur distincte parmi les objets de la salle (même règle que marque/année), tous combinés en ET logique.
+
+&#x20;
+
+\### Carte d'en-tête de la Wishlist (finition)
+
+&#x20;
+
+\- \*\*La lueur dorée de l'étage Wishlist, initialement étalée sur tout l'écran, resserrée en carte dédiée\*\* (`.wish-header`, titre + total) à coins arrondis et bordure en dégradé doré — même traitement que le formulaire (`.sheet--wishlist`). La liste de souhaits en dessous reste en affichage plat classique, non encadrée.
+
+\- \*\*Bordure en dégradé remplacée par une ombre\*\* (carte d'en-tête \*\*et\*\* formulaire) : un `box-shadow` combinant une ombre sombre (relief) et une lueur dorée diffuse (`rgba(201,164,92,…)`, même teinte que partout ailleurs dans l'app) plutôt qu'un trait de bordure — même gamme de couleurs, rendu plus doux. Sur le formulaire, ce `box-shadow` redéfinit entièrement celui de `.sheet` (non cumulatif en CSS) : l'ombre de relief d'origine y est donc reprise explicitement dans la nouvelle valeur pour ne pas la perdre.
+
 

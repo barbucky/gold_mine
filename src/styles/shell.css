@@ -139,16 +139,27 @@
   letter-spacing: -0.02em;
 }
 
-/* Étage Wishlist : même lueur dorée que son formulaire — identité visuelle cohérente
-   pour toute la fonctionnalité, distincte des autres étages. */
-.floor--wishlist {
-  background: radial-gradient(130% 60% at 50% 0%, rgba(201, 164, 92, 0.32), transparent 72%) no-repeat;
-  margin-top: -22px;
-  padding-top: 22px;
+/* En-tête de l'étage Wishlist : carte à coins arrondis, mise en avant par une ombre
+   (ombre sombre pour le relief + lueur dorée autour) plutôt qu'une bordure — même
+   traitement que le formulaire (.sheet--wishlist), identité visuelle cohérente. */
+.wish-header {
+  border-radius: 18px;
+  padding: 20px 18px;
+  background:
+    radial-gradient(130% 100% at 50% 0%, rgba(201, 164, 92, 0.32), transparent 72%),
+    linear-gradient(180deg, #14284a 0%, #0e1c33 60%, #0b1629 100%);
+  box-shadow:
+    0 14px 32px rgba(0, 0, 0, 0.45),
+    0 0 36px rgba(201, 164, 92, 0.18);
 }
 
-.floor--wishlist h1 {
+.wish-header h1 {
   color: var(--brass-hi);
+  margin: 0;
+}
+
+.wish-header .wish-total {
+  margin-top: 8px;
 }
 
 .note {
@@ -921,13 +932,19 @@
 }
 
 /* Formulaire Wishlist : même fond que les autres fiches, plus une lueur dorée en
-   haut et une bordure or — distingue ce formulaire du formulaire classique sans
-   sortir de la palette bleu nuit + or. */
+   haut — distingue ce formulaire du formulaire classique sans sortir de la palette
+   bleu nuit + or. Angles arrondis sur les 4 coins (plutôt que seulement en haut,
+   comme les autres fiches) pour un rendu plus « carte flottante », mis en avant par
+   une ombre (relief + lueur dorée) plutôt qu'une bordure. Le premier plan d'ombre
+   reprend celle de `.sheet` (remplacée, pas cumulée, par ce box-shadow qui la redéfinit). */
 .sheet--wishlist {
+  border-radius: 20px;
   background:
     radial-gradient(140% 75% at 50% 0%, rgba(201, 164, 92, 0.42), transparent 72%),
     linear-gradient(180deg, #14284a 0%, #0e1c33 45%, #0b1629 100%);
-  border-top: 3px solid var(--brass);
+  box-shadow:
+    0 -10px 40px rgba(0, 0, 0, 0.45),
+    0 0 36px rgba(201, 164, 92, 0.18);
 }
 
 .sheet-bar {

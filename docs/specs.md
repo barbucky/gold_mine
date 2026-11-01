@@ -533,6 +533,8 @@ Chaque étape se termine par un test sur téléphone et un commit.
 
 | 20 | Glisser-déposer des souhaits dans la Wishlist (priorité) | L'ordre de priorité persiste ; désactivé si un filtre par collection est actif |
 
+| 21 | Filtre par champ personnalisé texte dans « Mes collections » | Un menu apparaît par champ Texte à plusieurs valeurs, combiné aux autres filtres |
+
 &#x20;
 
 \---

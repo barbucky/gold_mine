@@ -80,8 +80,10 @@ export function Wishlist({ onOpenSouhait, onAchete }: WishlistProps) {
 
   if (!souhaits || !salles) {
     return (
-      <section className="floor floor--wishlist">
-        <h1>Wishlist</h1>
+      <section className="floor">
+        <div className="wish-header">
+          <h1>Wishlist</h1>
+        </div>
       </section>
     )
   }
@@ -105,16 +107,19 @@ export function Wishlist({ onOpenSouhait, onAchete }: WishlistProps) {
   }
 
   return (
-    <section className="floor floor--wishlist">
-      <h1>Wishlist</h1>
+    <section className="floor">
+      <div className="wish-header">
+        <h1>Wishlist</h1>
+        {souhaits.length > 0 && (
+          <p className="room-sub wish-total">
+            {souhaitsFiltres.length} souhait{souhaitsFiltres.length > 1 ? 's' : ''} · <strong>{euro.format(totalPrixAchat / 100)}</strong>
+          </p>
+        )}
+      </div>
       {souhaits.length === 0 ? (
         <p className="note">Aucun souhait pour l&rsquo;instant.</p>
       ) : (
         <>
-          <p className="room-sub wish-total">
-            {souhaitsFiltres.length} souhait{souhaitsFiltres.length > 1 ? 's' : ''} · <strong>{euro.format(totalPrixAchat / 100)}</strong>
-          </p>
-
           {sallesDesSouhaits.length > 1 && (
             <div className="field">
               <label htmlFor="filtreSalleWishlist">Filtrer par collection</label>
