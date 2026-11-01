@@ -48,6 +48,21 @@ class McGoldMineDB extends Dexie {
       souhaits: '++id, salleId, creeLe',
       reglages: 'cle',
     })
+    this.version(6)
+      .stores({
+        salles: '++id, ordre',
+        objets: '++id, salleId, favori, achatAnnee, anneeCreation',
+        photos: '++id, objetId, souhaitId',
+        piecesJointes: '++id, objetId',
+        souhaits: '++id, salleId, creeLe, ordre',
+        reglages: 'cle',
+      })
+      .upgrade(async (tx) => {
+        // Nouveau rang de priorité (glisser-déposer) — les souhaits déjà en base n'en ont pas,
+        // on le déduit de leur ordre d'affichage précédent (le plus récent en premier).
+        const souhaits = await tx.table('souhaits').orderBy('creeLe').reverse().toArray()
+        await Promise.all(souhaits.map((s, i) => tx.table('souhaits').update(s.id, { ordre: i })))
+      })
   }
 }
 

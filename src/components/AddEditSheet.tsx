@@ -5,7 +5,7 @@ import { creerObjet, modifierObjet, genererInventaire } from '../db/objets'
 import { importerPhoto, copierPhotoSouhaitVersObjet } from '../db/photos'
 import { obtenirSouhait, supprimerSouhait } from '../db/souhaits'
 import { Vitrine } from './Vitrine'
-import { ChampMarque } from './ChampMarque'
+import { ChampAutocomplete } from './ChampAutocomplete'
 import { ChampSalle } from './ChampSalle'
 import { useReducedMotion } from '../lib/useReducedMotion'
 import type { ChampPersonnalise, ValeurChamp } from '../db/types'
@@ -68,6 +68,7 @@ type EtatFormulaire = {
   prixRevente: string
   provenance: string
   reference: string
+  localisation: string
   description: string
   details: Record<string, ValeurChampFormulaire>
 }
@@ -92,6 +93,7 @@ const FORMULAIRE_VIDE: EtatFormulaire = {
   prixRevente: '',
   provenance: '',
   reference: '',
+  localisation: '',
   description: '',
   details: {},
 }
@@ -130,6 +132,15 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
     () => [...new Set((tousObjets ?? []).map((o) => o.marque).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr')),
     [tousObjets],
   )
+
+  /** Valeurs déjà saisies pour un champ personnalisé texte de même nom, tous objets confondus
+   *  (ex. « Groupe » renseigné sur d'autres CD) — même principe que les marques suggérées. */
+  function suggestionsChampTexte(nomChamp: string): string[] {
+    const valeurs = (tousObjets ?? [])
+      .map((o) => o.details[nomChamp])
+      .filter((v): v is string => typeof v === 'string' && v !== '')
+    return [...new Set(valeurs)].sort((a, b) => a.localeCompare(b, 'fr'))
+  }
 
   function reinitialiser() {
     setForm({ ...FORMULAIRE_VIDE, salleId: salles?.[0]?.id ?? null })
@@ -197,6 +208,7 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
       prixRevente: objet.prixRevente != null ? (objet.prixRevente / 100).toString() : '',
       provenance: objet.provenance,
       reference: objet.reference ?? '',
+      localisation: objet.localisation ?? '',
       description: objet.description,
       details: Object.fromEntries(
         Object.entries(objet.details).map(([nomChamp, valeur]) => {
@@ -330,6 +342,7 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
         prixRevente: prixReventeCentimes,
         provenance: form.provenance.trim(),
         reference: form.reference.trim() || undefined,
+        localisation: form.localisation.trim() || undefined,
         description: form.description.trim(),
         details: versDetailsFinales(form.details),
       }
@@ -393,7 +406,13 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
               <label htmlFor="fNom">Nom de l&rsquo;objet</label>
               <input id="fNom" required value={form.nom} onChange={(e) => setForm((f) => ({ ...f, nom: e.target.value }))} />
             </div>
-            <ChampMarque value={form.marque} onChange={(v) => setForm((f) => ({ ...f, marque: v }))} marquesConnues={marquesConnues} />
+            <ChampAutocomplete
+              id="fMarque"
+              label="Marque"
+              value={form.marque}
+              onChange={(v) => setForm((f) => ({ ...f, marque: v }))}
+              suggestions={marquesConnues}
+            />
           </div>
 
           <div className="row2">
@@ -525,6 +544,16 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
           </div>
 
           <div className="field">
+            <label htmlFor="fLocalisation">Localisation</label>
+            <input
+              id="fLocalisation"
+              placeholder="Ex. Vitrine salon, carton grenier 3…"
+              value={form.localisation}
+              onChange={(e) => setForm((f) => ({ ...f, localisation: e.target.value }))}
+            />
+          </div>
+
+          <div className="field">
             <label htmlFor="fNote">Notes</label>
             <textarea id="fNote" value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
           </div>
@@ -554,44 +583,48 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
               )
             }
 
+            if (champ.type === 'texte') {
+              return (
+                <ChampAutocomplete
+                  key={champ.nom}
+                  id={`fChamp-${champ.nom}`}
+                  label={champ.nom}
+                  value={typeof form.details[champ.nom] === 'string' ? (form.details[champ.nom] as string) : ''}
+                  onChange={(v) => definirValeurTexte(champ.nom, v)}
+                  suggestions={suggestionsChampTexte(champ.nom)}
+                />
+              )
+            }
+
             return (
               <div className="field" key={champ.nom}>
                 <label htmlFor={`fChamp-${champ.nom}`}>{champ.nom}</label>
-                {champ.type === 'texte' ? (
+                <div className="row2">
                   <input
                     id={`fChamp-${champ.nom}`}
-                    value={typeof form.details[champ.nom] === 'string' ? (form.details[champ.nom] as string) : ''}
-                    onChange={(e) => definirValeurTexte(champ.nom, e.target.value)}
+                    type="number"
+                    placeholder="Du tome n°"
+                    aria-label={`${champ.nom} — du tome n°`}
+                    value={valeurProgressionDe(champ.nom).du}
+                    onChange={(e) => definirValeurProgression(champ.nom, 'du', e.target.value)}
                   />
-                ) : (
-                  <>
-                    <div className="row2">
-                      <input
-                        type="number"
-                        placeholder="Du tome n°"
-                        aria-label={`${champ.nom} — du tome n°`}
-                        value={valeurProgressionDe(champ.nom).du}
-                        onChange={(e) => definirValeurProgression(champ.nom, 'du', e.target.value)}
-                      />
-                      <input
-                        type="number"
-                        placeholder="Au tome n°"
-                        aria-label={`${champ.nom} — au tome n°`}
-                        value={valeurProgressionDe(champ.nom).au}
-                        onChange={(e) => definirValeurProgression(champ.nom, 'au', e.target.value)}
-                      />
-                    </div>
-                    <label className="switch-row">
-                      <span>Série complète</span>
-                      <input
-                        type="checkbox"
-                        role="switch"
-                        checked={valeurProgressionDe(champ.nom).complet}
-                        onChange={(e) => definirValeurProgression(champ.nom, 'complet', e.target.checked)}
-                      />
-                    </label>
-                  </>
-                )}
+                  <input
+                    type="number"
+                    placeholder="Au tome n°"
+                    aria-label={`${champ.nom} — au tome n°`}
+                    value={valeurProgressionDe(champ.nom).au}
+                    onChange={(e) => definirValeurProgression(champ.nom, 'au', e.target.value)}
+                  />
+                </div>
+                <label className="switch-row">
+                  <span>Série complète</span>
+                  <input
+                    type="checkbox"
+                    role="switch"
+                    checked={valeurProgressionDe(champ.nom).complet}
+                    onChange={(e) => definirValeurProgression(champ.nom, 'complet', e.target.checked)}
+                  />
+                </label>
               </div>
             )
           })}

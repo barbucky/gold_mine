@@ -1,14 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
+import { DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
+import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { db } from '../db/database'
 import { modifierObjet } from '../db/objets'
+import { reordonnerSalles } from '../db/salles'
 import { chargerJeuDExemple } from '../db/seed'
 import { Vitrine } from '../components/Vitrine'
 import { FavoriteCoin } from '../components/FavoriteCoin'
 import { SalleIcone } from '../components/SalleIcone'
+import { DragHandle } from '../components/DragHandle'
 import { useReducedMotion } from '../lib/useReducedMotion'
 import { OPTIONS_TRI, trierObjets, type TriCle } from '../lib/triObjets'
-import { quantiteObjet, trouverProgression, valeurAchat, valeurAchatUnitaire } from '../lib/valeurObjet'
+import { quantiteTotale, trouverProgression, valeurAchat, valeurAchatUnitaire } from '../lib/valeurObjet'
 import type { Objet, Salle } from '../db/types'
 
 const euro = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
@@ -33,12 +38,52 @@ function calculerStats(objets: Objet[], salle: Salle): StatsSalle {
     null,
   )
   return {
-    nombre: objets.reduce((total, o) => total + quantiteObjet(o), 0),
+    nombre: objets.reduce((total, o) => total + quantiteTotale(o, salle), 0),
     anneeMin: annees.length ? Math.min(...annees) : null,
     anneeMax: annees.length ? Math.max(...annees) : null,
     dernierAjout: dernierAjout && { nom: dernierAjout.nom, marque: dernierAjout.marque },
     totalPrixAchat: objets.reduce((total, o) => total + valeurAchat(o, salle), 0),
   }
+}
+
+type RoomRowProps = {
+  salle: Salle
+  stats: StatsSalle | undefined
+  onOpen: () => void
+}
+
+/** Ligne de salle réordonnable (glisser-déposer) — composant à part pour que `useSortable`
+ *  respecte les règles des hooks (un nombre de salles qui varie interdit de l'appeler en boucle). */
+function RoomRow({ salle, stats, onOpen }: RoomRowProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: salle.id! })
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.6 : 1 }
+  const periode =
+    stats?.anneeMin != null ? (stats.anneeMin === stats.anneeMax ? `${stats.anneeMin}` : `${stats.anneeMin} – ${stats.anneeMax}`) : null
+  const sousTitre = [periode, stats?.dernierAjout && `dernier ajout : ${stats.dernierAjout.nom} · ${stats.dernierAjout.marque}`]
+    .filter(Boolean)
+    .join(' · ')
+
+  return (
+    <li className="room-row" ref={setNodeRef} style={style}>
+      <DragHandle attributes={attributes} listeners={listeners} label={`Réordonner la salle ${salle.nom}`} />
+      <button className="room" type="button" onClick={onOpen}>
+        <span className="numeral">{salle.numero}</span>
+        <span>
+          <span className="n">
+            <SalleIcone salle={salle} taille={16} /> {salle.nom}
+          </span>
+          <span className="s">{sousTitre}</span>
+        </span>
+        <span className="count">
+          {stats?.nombre ?? 0}
+          <small>objets</small>
+        </span>
+        <span className="chev" aria-hidden="true">
+          ›
+        </span>
+      </button>
+    </li>
+  )
 }
 
 export function Collections({ onOpenObjet, onOpenGestionSalles }: CollectionsProps) {
@@ -53,12 +98,26 @@ export function Collections({ onOpenObjet, onOpenGestionSalles }: CollectionsPro
 
   const salles = useLiveQuery(() => db.salles.orderBy('ordre').toArray())
   const objets = useLiveQuery(() => db.objets.toArray())
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
 
   const statsParSalle = new Map<number, StatsSalle>()
   if (salles && objets) {
     for (const salle of salles) {
       statsParSalle.set(salle.id!, calculerStats(objets.filter((o) => o.salleId === salle.id), salle))
     }
+  }
+
+  function handleDragEndSalles(event: DragEndEvent) {
+    const { active, over } = event
+    if (!salles || !over || active.id === over.id) return
+    const oldIndex = salles.findIndex((s) => s.id === active.id)
+    const newIndex = salles.findIndex((s) => s.id === over.id)
+    if (oldIndex === -1 || newIndex === -1) return
+    const nouvelOrdre = arrayMove(salles, oldIndex, newIndex).map((s) => s.id!)
+    reordonnerSalles(nouvelOrdre)
   }
 
   useEffect(() => {
@@ -150,38 +209,15 @@ export function Collections({ onOpenObjet, onOpenGestionSalles }: CollectionsPro
               Gérer les salles
             </button>
           </div>
-          <div className="rooms">
-            {salles.map((salle) => {
-              const stats = statsParSalle.get(salle.id!)
-              const periode =
-                stats?.anneeMin != null
-                  ? stats.anneeMin === stats.anneeMax
-                    ? `${stats.anneeMin}`
-                    : `${stats.anneeMin} – ${stats.anneeMax}`
-                  : null
-              const sousTitre = [periode, stats?.dernierAjout && `dernier ajout : ${stats.dernierAjout.nom} · ${stats.dernierAjout.marque}`]
-                .filter(Boolean)
-                .join(' · ')
-              return (
-                <button className="room" type="button" key={salle.id} onClick={() => ouvrirSalle(salle.id!)}>
-                  <span className="numeral">{salle.numero}</span>
-                  <span>
-                    <span className="n">
-                      <SalleIcone salle={salle} taille={16} /> {salle.nom}
-                    </span>
-                    <span className="s">{sousTitre}</span>
-                  </span>
-                  <span className="count">
-                    {stats?.nombre ?? 0}
-                    <small>objets</small>
-                  </span>
-                  <span className="chev" aria-hidden="true">
-                    ›
-                  </span>
-                </button>
-              )
-            })}
-          </div>
+          <DndContext sensors={sensors} onDragEnd={handleDragEndSalles}>
+            <SortableContext items={salles.map((s) => s.id!)} strategy={verticalListSortingStrategy}>
+              <ul className="rooms">
+                {salles.map((salle) => (
+                  <RoomRow key={salle.id} salle={salle} stats={statsParSalle.get(salle.id!)} onOpen={() => ouvrirSalle(salle.id!)} />
+                ))}
+              </ul>
+            </SortableContext>
+          </DndContext>
         </div>
       )}
 

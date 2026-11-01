@@ -372,9 +372,9 @@ objets    id, salleId, nom, marque, dateAffichee ("Circa 1956"),
 
 &#x20;         prixAchat (centimes, EUR), prixRevente (centimes, EUR),
 
-&#x20;         provenance, inventaire ("2026.118"), description, favori (bool),
+&#x20;         provenance, reference?, localisation? (emplacement physique), inventaire ("2026.118"),
 
-&#x20;         creeLe, modifieLe, details (par champ : string si "texte",
+&#x20;         description, favori (bool), creeLe, modifieLe, details (par champ : string si "texte",
 
 &#x20;         {actuel, total} si "progression" — ex. {"Club":"PSG", "Volumes":{"actuel":6,"total":25}})
 
@@ -384,7 +384,9 @@ photos    id, objetId? (xor souhaitId?), originale (Blob), detouree (Blob | null
 
 souhaits  id, nom, marque, salleId (collection visée), prixAchat (centimes, EUR),
 
-&#x20;         visualisation? (URL produit), creeLe   — wishlist (étape 15), converti en objet à l'achat
+&#x20;         visualisation? (URL produit), ordre (priorité, glisser-déposer), creeLe
+
+&#x20;         — wishlist (étape 15), converti en objet à l'achat
 
 reglages  cle, valeur   (son, introVue, derniereSauvegarde…)
 
@@ -514,6 +516,22 @@ Chaque étape se termine par un test sur téléphone et un commit.
 | 12 | Finitions : accessibilité, performances, états vides | Pas de régression sur les étapes précédentes |
 
 | 15 | Wishlist : nouvel étage, formulaire réduit, conversion en objet à l'achat | Un souhait coché « Acheté » devient un objet de la collection visée, photo reprise |
+
+&#x20;
+
+\*\*V1 validée ici.\*\* Les étapes suivantes sont des améliorations (V2).
+
+&#x20;
+
+| 16 | Champ Localisation sur l'objet | Visible et modifiable sur le formulaire et la fiche |
+
+| 17 | Suggestions sur les champs personnalisés texte (`ChampAutocomplete`) | Une valeur déjà saisie pour un champ de même nom est proposée sur un autre objet |
+
+| 18 | Décompte des objets : inclut les tomes d'une série possédée, partout (Mes collections, Accueil, Statistiques) | Un même objet affiche le même nombre sur les trois écrans |
+
+| 19 | Glisser-déposer des salles dans « Mes collections » (`@dnd-kit`) | L'ordre et les numéros romains se mettent à jour après un glisser |
+
+| 20 | Glisser-déposer des souhaits dans la Wishlist (priorité) | L'ordre de priorité persiste ; désactivé si un filtre par collection est actif |
 
 &#x20;
 

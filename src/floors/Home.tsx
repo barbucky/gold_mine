@@ -4,7 +4,7 @@ import { db } from '../db/database'
 import { Vitrine } from '../components/Vitrine'
 import { SalleIcone } from '../components/SalleIcone'
 import { obtenirDerniereSauvegarde } from '../lib/sauvegarde'
-import { quantiteObjet, trouverProgression, valeurAchatUnitaire } from '../lib/valeurObjet'
+import { quantiteTotale, trouverProgression, valeurAchatUnitaire } from '../lib/valeurObjet'
 import type { Objet, Salle } from '../db/types'
 
 const euro = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
@@ -93,11 +93,12 @@ export function Home({ onSeeAll, onOpenObjet, onOpenBackup }: HomeProps) {
   const salutation = heure >= 18 || heure < 5 ? 'Bonsoir' : 'Bonjour'
   const dateDuJour = maintenant.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
 
-  const nombreObjets = objets.reduce((total, o) => total + quantiteObjet(o), 0)
-  const debutMois = new Date(maintenant.getFullYear(), maintenant.getMonth(), 1)
-  const ajoutsCeMois = objets.filter((o) => o.creeLe >= debutMois).reduce((total, o) => total + quantiteObjet(o), 0)
-
   const sallesParId = new Map(salles.map((s) => [s.id, s]))
+  const nombreObjets = objets.reduce((total, o) => total + quantiteTotale(o, sallesParId.get(o.salleId)), 0)
+  const debutMois = new Date(maintenant.getFullYear(), maintenant.getMonth(), 1)
+  const ajoutsCeMois = objets
+    .filter((o) => o.creeLe >= debutMois)
+    .reduce((total, o) => total + quantiteTotale(o, sallesParId.get(o.salleId)), 0)
   const recents = [...objets].sort((a, b) => b.creeLe.getTime() - a.creeLe.getTime()).slice(0, NB_RECENTS)
 
   const joursDepuisSauvegarde = derniereSauvegarde ? Math.floor((maintenant.getTime() - derniereSauvegarde.getTime()) / 86_400_000) : null

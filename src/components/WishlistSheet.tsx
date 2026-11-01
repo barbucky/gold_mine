@@ -3,7 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/database'
 import { creerSouhait, modifierSouhait, obtenirSouhait, supprimerSouhait } from '../db/souhaits'
 import { importerPhotoSouhait } from '../db/photos'
-import { ChampMarque } from './ChampMarque'
+import { ChampAutocomplete } from './ChampAutocomplete'
 import { ChampSalle } from './ChampSalle'
 import { useReducedMotion } from '../lib/useReducedMotion'
 
@@ -208,11 +208,12 @@ export const WishlistSheet = forwardRef<WishlistSheetHandle, WishlistSheetProps>
               <label htmlFor="fWNom">Nom de l&rsquo;objet</label>
               <input id="fWNom" required value={form.nom} onChange={(e) => setForm((f) => ({ ...f, nom: e.target.value }))} />
             </div>
-            <ChampMarque
+            <ChampAutocomplete
               id="fWMarque"
+              label="Marque"
               value={form.marque}
               onChange={(v) => setForm((f) => ({ ...f, marque: v }))}
-              marquesConnues={marquesConnues}
+              suggestions={marquesConnues}
             />
           </div>
 

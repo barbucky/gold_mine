@@ -35,6 +35,12 @@ export function modifierSalle(id: number, changements: Partial<Omit<Salle, 'id'>
   return db.salles.update(id, changements)
 }
 
+/** Réordonne les salles selon l'ordre fourni (ids) et renumérote I, II, III… en conséquence
+ *  (glisser-déposer dans « Mes collections »). */
+export async function reordonnerSalles(idsOrdonnes: number[]) {
+  await Promise.all(idsOrdonnes.map((id, i) => db.salles.update(id, { numero: versRomain(i + 1), ordre: i })))
+}
+
 /** Supprime la salle puis renumérote les suivantes (I, II, III… sans trou) et compacte `ordre`. */
 export async function supprimerSalle(id: number) {
   await db.salles.delete(id)

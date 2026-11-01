@@ -472,3 +472,54 @@ Format : \*\*décision\*\* — raison / précision. ❌ = option refusée.
 
 \- \*\*Total de la Wishlist mis en valeur\*\* : police légèrement agrandie, seule la valeur du total en gras (pas le nombre de souhaits) — cohérent avec `.it-price` ailleurs dans l'app. Le total suivait déjà le filtre par collection (calculé sur la liste filtrée), pas seulement l'affichage visuel.
 
+&#x20;
+
+\---
+
+&#x20;
+
+\## V1 validée — début de la V2 (étapes 16 à 20)
+
+&#x20;
+
+\### Champ « Localisation » (étape 16)
+
+&#x20;
+
+\- \*\*Champ `localisation?: string`\*\* sur `Objet`, optionnel, pas de migration Dexie (comme `reference`) : emplacement physique de l'objet (ex. « Vitrine salon », « Carton grenier 3 »). Affiché sur la fiche objet entre Référence et Provenance.
+
+&#x20;
+
+\### Suggestions sur les champs personnalisés texte (étape 17)
+
+&#x20;
+
+\- \*\*`ChampMarque` généralisé en `ChampAutocomplete`\*\*, réutilisable : même composant pour le champ Marque et pour tout champ personnalisé de type Texte. Les suggestions viennent des valeurs déjà saisies pour un champ de \*\*même nom\*\*, tous objets et toutes salles confondus (pas scopé à la salle courante) — même principe que les marques, sans case à cocher à activer par champ.
+
+&#x20;
+
+\### Décompte incluant les tomes d'une série (étape 18)
+
+&#x20;
+
+\- \*\*❌ Annule une décision antérieure\*\* (section « Nombre d'exemplaires » ci-dessus) qui disait explicitement : « la progression ne change que la valeur, jamais le nombre d'objets ». Demandé explicitement par l'utilisateur, avec portée élargie à toute l'app (pas seulement « Mes collections ») pour qu'un même objet affiche toujours le même nombre partout.
+
+\- \*\*`quantiteTotale` exportée\*\* depuis `lib/valeurObjet.ts` (anciennement la fonction interne `multiplicateur`, qui servait déjà aux totaux de valeur) : nombre d'exemplaires × volumes possédés d'une série. Remplace `quantiteObjet` dans tous les indicateurs de comptage (« Mes collections », tuiles de l'accueil, Statistiques) — `quantiteObjet` reste utilisée seule là où seule la quantité d'exemplaires compte (prix unitaire).
+
+&#x20;
+
+\### Glisser-déposer pour réordonner (étapes 19 et 20)
+
+&#x20;
+
+\- \*\*Librairie `@dnd-kit` (core + sortable + utilities)\*\* plutôt qu'une implémentation fait maison : gère déjà les cas tactiles délicats sur iPhone (distinguer glisser du défilement normal de la liste), au prix d'une dépendance (~45 Ko ajoutés au bundle principal après mesure — plus que les 10-15 Ko estimés avant d'installer). Intégrée au build comme toute dépendance du projet : aucun accès réseau à l'usage, fonctionne hors ligne comme le reste.
+
+\- \*\*Poignée de glisser dédiée\*\* (`DragHandle`, grise, icône à 6 points), séparée du bouton qui ouvre la salle/le souhait : évite tout conflit entre « taper pour ouvrir » et « glisser pour réordonner ». `touch-action: none` sur la poignée, nécessaire pour que le geste tactile soit capté par la librairie plutôt que par le défilement du navigateur.
+
+\- \*\*Renumérotation des salles identique à la suppression\*\* : glisser une salle recalcule `ordre` \*\*et\*\* `numero` (chiffres romains) pour toutes les salles, sur le même principe déjà en place pour `supprimerSalle`. Nouvelle fonction `reordonnerSalles(idsOrdonnes)`.
+
+\- \*\*Nouveau champ `ordre` sur `Souhait`\*\* (schéma Dexie v6, avec migration qui déduit un rang initial à partir de l'ancien tri par date pour les souhaits déjà en base) : la wishlist n'avait jusqu'ici aucune notion d'ordre manuel, seulement un tri par date d'ajout. \*\*Un nouveau souhait est ajouté en bas de la liste\*\* (priorité la plus basse par défaut) plutôt qu'en haut — l'utilisateur remonte lui-même ce qui devient urgent.
+
+\- \*\*Réordonnancement désactivé si un filtre par collection est actif\*\* (`useSortable({ disabled })`, poignée grisée) : glisser un souhait dans une liste filtrée serait ambigu (où l'insérer dans la liste complète non filtrée ?) — on ne réordonne que la liste entière, sans filtre.
+
+

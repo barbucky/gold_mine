@@ -322,6 +322,12 @@ export const ObjectSheet = forwardRef<ObjectSheetHandle, ObjectSheetProps>(funct
                   <dd>{objet.reference}</dd>
                 </div>
               )}
+              {objet.localisation && (
+                <div>
+                  <dt>Localisation</dt>
+                  <dd>{objet.localisation}</dd>
+                </div>
+              )}
               <div>
                 <dt>Provenance</dt>
                 <dd>{objet.provenance}</dd>

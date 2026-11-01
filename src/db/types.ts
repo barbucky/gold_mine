@@ -48,6 +48,8 @@ export type Objet = {
   provenance: string
   /** Référence libre (ex. référence constructeur/catalogue), distincte du n° d'inventaire. */
   reference?: string
+  /** Emplacement physique de l'objet (ex. "Vitrine salon", "Carton grenier 3"). */
+  localisation?: string
   inventaire: string
   description: string
   favori: boolean
@@ -81,6 +83,8 @@ export type Souhait = {
   prixAchat: number
   /** URL vers la page du produit (boutique, annonce…), propre à la wishlist. */
   visualisation?: string
+  /** Rang de priorité (0 = le plus prioritaire), réordonnable par glisser-déposer. */
+  ordre: number
   creeLe: Date
 }
 

@@ -25,11 +25,11 @@ function multiplicateurSerie(objet: Objet, salle: Salle | undefined): number {
 }
 
 /**
- * Multiplicateur complet : nombre d'exemplaires × nombre de volumes possédés (série). Les deux
- * se cumulent (ex. 2 coffrets identiques d'une même série), mais seule la quantité compte dans
- * les indicateurs de nombre d'objets — la progression ne change pas le nombre d'objets.
+ * Nombre total d'unités : nombre d'exemplaires × nombre de volumes possédés (série). Les deux
+ * se cumulent (ex. 2 coffrets identiques d'une même série) — utilisé pour les totaux de valeur
+ * ET pour les indicateurs de comptage (nombre d'objets d'une salle, de l'accueil, des statistiques).
  */
-function multiplicateur(objet: Objet, salle: Salle | undefined): number {
+export function quantiteTotale(objet: Objet, salle: Salle | undefined): number {
   return quantiteObjet(objet) * multiplicateurSerie(objet, salle)
 }
 
@@ -46,13 +46,13 @@ export function valeurReventeUnitaire(objet: Objet, salle: Salle | undefined): n
 
 /** Valeur d'achat totale (prix unitaire × série × nombre d'exemplaires) — pour les totaux/statistiques. */
 export function valeurAchat(objet: Objet, salle: Salle | undefined): number {
-  return objet.prixAchat * multiplicateur(objet, salle)
+  return objet.prixAchat * quantiteTotale(objet, salle)
 }
 
 /** Valeur de revente totale, ou `undefined` si non renseignée — pour les totaux/statistiques. */
 export function valeurRevente(objet: Objet, salle: Salle | undefined): number | undefined {
   if (objet.prixRevente == null) return undefined
-  return objet.prixRevente * multiplicateur(objet, salle)
+  return objet.prixRevente * quantiteTotale(objet, salle)
 }
 
 /**
