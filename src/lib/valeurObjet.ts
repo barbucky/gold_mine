@@ -13,6 +13,13 @@ export function nombrePossede(progression: ValeurProgression): number {
   return Math.max(1, progression.au - progression.du + 1)
 }
 
+/** Pourcentage de progression vers le total de la série (0-100), ou `undefined` si le
+ *  total n'est pas renseigné — sert à afficher la jauge. */
+export function pourcentageProgression(progression: ValeurProgression): number | undefined {
+  if (!progression.total || progression.total <= 0) return undefined
+  return Math.max(0, Math.min(100, Math.round((progression.au / progression.total) * 100)))
+}
+
 /** Nombre d'exemplaires identiques possédés de cet objet (ex. 2 paires de lunettes identiques). */
 export function quantiteObjet(objet: Objet): number {
   return objet.quantite ?? 1

@@ -542,4 +542,32 @@ Format : \*\*décision\*\* — raison / précision. ❌ = option refusée.
 
 \- \*\*Bordure en dégradé remplacée par une ombre\*\* (carte d'en-tête \*\*et\*\* formulaire) : un `box-shadow` combinant une ombre sombre (relief) et une lueur dorée diffuse (`rgba(201,164,92,…)`, même teinte que partout ailleurs dans l'app) plutôt qu'un trait de bordure — même gamme de couleurs, rendu plus doux. Sur le formulaire, ce `box-shadow` redéfinit entièrement celui de `.sheet` (non cumulatif en CSS) : l'ombre de relief d'origine y est donc reprise explicitement dans la nouvelle valeur pour ne pas la perdre.
 
+&#x20;
+
+\### Décompte avec tomes : partiellement annulé (étape 18 corrigée)
+
+&#x20;
+
+\- \*\*❌ Annule partiellement l'étape 18\*\* : à l'usage, compter les tomes d'une série dans « Mes collections » et l'accueil ne semblait \*\*pas logique\*\* à l'utilisateur (une ligne de la liste = un objet, pas N tomes). \*\*« Mes collections » et l'accueil reviennent à `quantiteObjet`\*\* (quantité d'exemplaires seule, tomes exclus) ; \*\*Statistiques garde `quantiteTotale`\*\* (tomes inclus) — un même objet peut donc de nouveau afficher des nombres différents entre Mes collections/Accueil (vue « objets physiques ») et Statistiques (vue « volumes réellement possédés »), et c'est voulu : les deux questions ne sont pas les mêmes.
+
+&#x20;
+
+\### Total de la série et jauge de progression (étape 22)
+
+&#x20;
+
+\- \*\*Champ `total?: number` ajouté à `ValeurProgression`\*\*, optionnel, pas de migration Dexie (stocké dans `details`, non indexé). Sans lui, le champ progression se comporte exactement comme avant (bascule manuelle « Série complète »).
+
+\- \*\*Avec un total renseigné, `complet` est déduite automatiquement\*\* (`au >= total`) au lieu d'être une bascule manuelle — évite une incohérence entre une jauge affichant 100 % et une case à cocher qui dirait le contraire. La bascule manuelle disparaît du formulaire dès que le total est rempli, remplacée par la jauge.
+
+\- \*\*Jauge simple en CSS\*\* (`.jauge`/`.jauge-remplissage`, dégradé doré sur fond `--line`) plutôt qu'un graphique SVG comme dans Statistiques : affichage ponctuel sur un seul champ, pas besoin de la mécanique de graphique existante. Affichée sur le formulaire (aperçu en direct pendant la saisie) et sur la fiche objet.
+
+\- \*\*Ne change pas le calcul du nombre de tomes \*\*possédés\*\*\*\* (`nombrePossede`, toujours `au − du + 1`) : `total` est une information d'affichage (où en est la collection par rapport à l'objectif), pas un nouveau multiplicateur de valeur ou de comptage.
+
+\- \*\*Finition de la jauge\*\* : repassée en version plus fine (4 px) et positionnée en absolu (`inset:0` + `width` en ligne) plutôt qu'un simple `height:100%` en flux normal — garantit que le remplissage colle exactement aux bords de la piste (haut/bas/gauche), sans dépendre d'une hauteur de ligne ou d'un `overflow` pour paraître centré.
+
+\- \*\*Jauge compacte reprise sur la tuile d'objet de « Mes collections »\*\* (`.it-jauge`, sous le nom/la marque) dès qu'un total est renseigné — visible sans ouvrir la fiche. N'apparaît pas sur l'accueil ni la wishlist (non demandé).
+
+\- \*\*Bug corrigé : jauge de la fiche objet bien plus épaisse que prévu (22,8 px au lieu de 2 px), malgré un CSS en apparence correct\*\* : `.d-facts div` utilisait un sélecteur \*\*descendant\*\* (espace) plutôt qu'\*\*enfant direct\*\* (`>`), pensé à l'origine pour ne cibler que les lignes de fait (`<div><dt>/<dd></div>`) juste sous `.d-facts` — mais un sélecteur descendant matche n'importe quel `<div>` imbriqué à n'importe quelle profondeur, y compris `.jauge` niché plus bas dans le `<dd>`. Elle héritait donc de `padding-block: 11px` destiné aux lignes, pas à la jauge (confirmé via le modèle de boîte de l'inspecteur : hauteur de contenu 0, padding 11 + 11). Corrigé en `.d-facts > div`. Diagnostic entièrement fait à distance (navigation privée pour écarter le cache/service worker, comparaison du CSS/JS réellement servi par le serveur local, puis lecture du modèle de boîte fournie par l'utilisateur) — utile si un bug similaire se reproduit avec un autre sélecteur descendant trop large dans ce fichier.
+
 

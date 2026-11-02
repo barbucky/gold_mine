@@ -13,7 +13,7 @@ import { SalleIcone } from '../components/SalleIcone'
 import { DragHandle } from '../components/DragHandle'
 import { useReducedMotion } from '../lib/useReducedMotion'
 import { OPTIONS_TRI, trierObjets, type TriCle } from '../lib/triObjets'
-import { quantiteTotale, trouverProgression, valeurAchat, valeurAchatUnitaire } from '../lib/valeurObjet'
+import { pourcentageProgression, quantiteObjet, trouverProgression, valeurAchat, valeurAchatUnitaire } from '../lib/valeurObjet'
 import type { Objet, Salle } from '../db/types'
 
 const euro = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
@@ -38,7 +38,7 @@ function calculerStats(objets: Objet[], salle: Salle): StatsSalle {
     null,
   )
   return {
-    nombre: objets.reduce((total, o) => total + quantiteTotale(o, salle), 0),
+    nombre: objets.reduce((total, o) => total + quantiteObjet(o), 0),
     anneeMin: annees.length ? Math.min(...annees) : null,
     anneeMax: annees.length ? Math.max(...annees) : null,
     dernierAjout: dernierAjout && { nom: dernierAjout.nom, marque: dernierAjout.marque },
@@ -318,26 +318,40 @@ export function Collections({ onOpenObjet, onOpenGestionSalles }: CollectionsPro
             </div>
           )}
           <ul className="items">
-            {objetsDeLaSalle.map((objet) => (
-              <li className="item" key={objet.id}>
-                <button className="item-open" type="button" onClick={(e) => onOpenObjet(objet.id!, e.currentTarget)}>
-                  <span className="vit">
-                    <Vitrine objetId={objet.id} iconeSalle={salleOuverte?.icone} complet={trouverProgression(objet, salleOuverte)?.complet} />
-                  </span>
-                  <span className="info">
-                    <span className="it-title">{objet.nom}</span>
-                    <span className="it-brand">{objet.marque}</span>
-                    <span className="it-date">{objet.dateAffichee}</span>
-                    <span className="it-price">{euro.format(valeurAchatUnitaire(objet, salleOuverte) / 100)}</span>
-                  </span>
-                </button>
-                <FavoriteCoin
-                  pressed={objet.favori}
-                  label={`Favori : ${objet.nom}, ${objet.marque}`}
-                  onToggle={() => toggleFavori(objet)}
-                />
-              </li>
-            ))}
+            {objetsDeLaSalle.map((objet) => {
+              const progression = trouverProgression(objet, salleOuverte)
+              const pourcent = progression ? pourcentageProgression(progression) : undefined
+              return (
+                <li className="item" key={objet.id}>
+                  <button className="item-open" type="button" onClick={(e) => onOpenObjet(objet.id!, e.currentTarget)}>
+                    <span className="vit">
+                      <Vitrine objetId={objet.id} iconeSalle={salleOuverte?.icone} complet={progression?.complet} />
+                    </span>
+                    <span className="info">
+                      <span className="it-title">{objet.nom}</span>
+                      <span className="it-brand">{objet.marque}</span>
+                      {pourcent != null && (
+                        <span className="it-jauge">
+                          <span className="jauge" aria-hidden="true">
+                            <span className="jauge-remplissage" style={{ width: `${pourcent}%` }} />
+                          </span>
+                          <span className="it-jauge-texte">
+                            {progression!.au} / {progression!.total}
+                          </span>
+                        </span>
+                      )}
+                      <span className="it-date">{objet.dateAffichee}</span>
+                      <span className="it-price">{euro.format(valeurAchatUnitaire(objet, salleOuverte) / 100)}</span>
+                    </span>
+                  </button>
+                  <FavoriteCoin
+                    pressed={objet.favori}
+                    label={`Favori : ${objet.nom}, ${objet.marque}`}
+                    onToggle={() => toggleFavori(objet)}
+                  />
+                </li>
+              )
+            })}
           </ul>
         </div>
       )}

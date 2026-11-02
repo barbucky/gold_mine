@@ -5,8 +5,10 @@ export type ChampPersonnalise = {
   type: TypeChamp
 }
 
-/** Progression d'une série (ex. mangas) : tomes possédés du n° `du` au n° `au`, et si la série est complète. */
-export type ValeurProgression = { genre: 'progression'; du: number; au: number; complet: boolean }
+/** Progression d'une série (ex. mangas) : tomes possédés du n° `du` au n° `au`. Avec `total`
+ *  (nombre de tomes existants, optionnel), `complet` est déduite automatiquement (`au >= total`)
+ *  et une jauge de progression peut être affichée ; sans `total`, `complet` reste une bascule manuelle. */
+export type ValeurProgression = { genre: 'progression'; du: number; au: number; total?: number; complet: boolean }
 
 /** Référence vers un autre objet de la collection (ex. la console sur laquelle un jeu fonctionne). */
 export type ValeurAssociation = { genre: 'association'; objetId: number }

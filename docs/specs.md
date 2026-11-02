@@ -376,7 +376,7 @@ objets    id, salleId, nom, marque, dateAffichee ("Circa 1956"),
 
 &#x20;         description, favori (bool), creeLe, modifieLe, details (par champ : string si "texte",
 
-&#x20;         {actuel, total} si "progression" — ex. {"Club":"PSG", "Volumes":{"actuel":6,"total":25}})
+&#x20;         {du, au, total?, complet} si "progression" — ex. {"Club":"PSG", "Volumes":{"du":1,"au":6,"total":25,"complet":false}})
 
 photos    id, objetId? (xor souhaitId?), originale (Blob), detouree (Blob | null), miniature (Blob),
 
@@ -398,7 +398,7 @@ reglages  cle, valeur   (son, introVue, derniereSauvegarde…)
 
 &#x20;
 
-\- \*\*Type « progression »\*\* : pour un champ comme « Volumes possédés » (ex. collection de mangas/comics par tomes). Au lieu d'un texte libre, deux nombres (`actuel`/`total`). \*\*Multiplicateur de valeur (étape 11)\*\* : si la salle d'un objet définit un champ « progression », son prix d'achat et sa revente potentielle affichés partout (fiche, accueil, collections, statistiques) sont multipliés par le nombre de volumes possédés (`actuel`) — permet de n'entrer que le prix unitaire d'une série. Affichage d'une barre de progression dédiée dans la fiche : pas encore fait, \*\*\[à concevoir]\*\*.
+\- \*\*Type « progression »\*\* : pour un champ comme « Volumes possédés » (ex. collection de mangas/comics par tomes). Stocke `du`/`au` (plage de tomes possédés, le nombre réel se déduisant par `au − du + 1`), un `total?` optionnel (nombre de tomes existants dans la série), et `complet` (déduite automatiquement de `au >= total` si `total` est renseigné, sinon bascule manuelle). \*\*Multiplicateur de valeur (étape 11)\*\* : le prix d'achat et la revente potentielle affichés dans les listes (accueil, collections) sont multipliés par le nombre de volumes possédés — permet de n'entrer que le prix unitaire d'une série ; la fiche objet affiche le prix unitaire brut (étape \*\*finitions\*\*, voir plus bas). \*\*Jauge de progression\*\* (étape 22) : affichée sur le formulaire et la fiche dès que `total` est renseigné.
 
 &#x20;
 
@@ -527,13 +527,15 @@ Chaque étape se termine par un test sur téléphone et un commit.
 
 | 17 | Suggestions sur les champs personnalisés texte (`ChampAutocomplete`) | Une valeur déjà saisie pour un champ de même nom est proposée sur un autre objet |
 
-| 18 | Décompte des objets : inclut les tomes d'une série possédée, partout (Mes collections, Accueil, Statistiques) | Un même objet affiche le même nombre sur les trois écrans |
+| 18 | ~~Décompte des objets avec tomes, partout~~ — corrigé à l'usage : Mes collections et Accueil comptent par quantité seule, seules les Statistiques incluent les tomes | Mes collections/Accueil = objets physiques ; Statistiques = volumes possédés |
 
 | 19 | Glisser-déposer des salles dans « Mes collections » (`@dnd-kit`) | L'ordre et les numéros romains se mettent à jour après un glisser |
 
 | 20 | Glisser-déposer des souhaits dans la Wishlist (priorité) | L'ordre de priorité persiste ; désactivé si un filtre par collection est actif |
 
 | 21 | Filtre par champ personnalisé texte dans « Mes collections » | Un menu apparaît par champ Texte à plusieurs valeurs, combiné aux autres filtres |
+
+| 22 | Total de la série + jauge de progression (champ progression) | Une jauge remplace la bascule « Série complète » dès qu'un total est renseigné |
 
 &#x20;
 

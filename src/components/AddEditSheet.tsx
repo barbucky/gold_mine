@@ -10,9 +10,10 @@ import { ChampSalle } from './ChampSalle'
 import { useReducedMotion } from '../lib/useReducedMotion'
 import type { ChampPersonnalise, ValeurChamp } from '../db/types'
 
-/** Représentation « brouillon » d'un champ progression : du/au en texte libre pendant la saisie
- *  (pour ne pas afficher de 0 forcé quand le champ est vide), converti en nombres à l'enregistrement. */
-type ValeurProgressionFormulaire = { genre: 'progression'; du: string; au: string; complet: boolean }
+/** Représentation « brouillon » d'un champ progression : du/au/total en texte libre pendant la
+ *  saisie (pour ne pas afficher de 0 forcé quand le champ est vide), converti en nombres à
+ *  l'enregistrement. */
+type ValeurProgressionFormulaire = { genre: 'progression'; du: string; au: string; total: string; complet: boolean }
 /** Brouillon d'une association : `objetId` reste `null` tant que rien n'est choisi dans le sélecteur. */
 type ValeurAssociationFormulaire = { genre: 'association'; objetId: number | null }
 type ValeurChampFormulaire = string | ValeurProgressionFormulaire | ValeurAssociationFormulaire
@@ -31,7 +32,12 @@ function versDetailsFinales(details: Record<string, ValeurChampFormulaire>): Rec
   const resultat: Record<string, ValeurChamp> = {}
   for (const [nomChamp, valeur] of Object.entries(details)) {
     if (estProgressionFormulaire(valeur)) {
-      resultat[nomChamp] = { genre: 'progression', du: Number(valeur.du) || 1, au: Number(valeur.au) || 1, complet: valeur.complet }
+      const du = Number(valeur.du) || 1
+      const au = Number(valeur.au) || 1
+      const total = Number(valeur.total) || undefined
+      // Avec un total renseigné, « complet » se déduit automatiquement (au >= total) plutôt
+      // que de dépendre de la bascule manuelle — évite une incohérence entre jauge et case.
+      resultat[nomChamp] = { genre: 'progression', du, au, total, complet: total ? au >= total : valeur.complet }
     } else if (estAssociationFormulaire(valeur)) {
       if (valeur.objetId != null) resultat[nomChamp] = { genre: 'association', objetId: valeur.objetId }
     } else {
@@ -214,7 +220,16 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
         Object.entries(objet.details).map(([nomChamp, valeur]) => {
           if (typeof valeur !== 'object') return [nomChamp, valeur]
           if (valeur.genre === 'progression') {
-            return [nomChamp, { genre: 'progression', du: valeur.du.toString(), au: valeur.au.toString(), complet: valeur.complet }]
+            return [
+              nomChamp,
+              {
+                genre: 'progression',
+                du: valeur.du.toString(),
+                au: valeur.au.toString(),
+                total: valeur.total?.toString() ?? '',
+                complet: valeur.complet,
+              },
+            ]
           }
           return [nomChamp, { genre: 'association', objetId: valeur.objetId }]
         }),
@@ -286,13 +301,16 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
 
   function valeurProgressionDe(nomChamp: string): ValeurProgressionFormulaire {
     const existante = form.details[nomChamp]
-    return existante && estProgressionFormulaire(existante) ? existante : { genre: 'progression', du: '', au: '', complet: false }
+    return existante && estProgressionFormulaire(existante) ? existante : { genre: 'progression', du: '', au: '', total: '', complet: false }
   }
 
-  function definirValeurProgression(nomChamp: string, cle: 'du' | 'au' | 'complet', valeur: string | boolean) {
+  function definirValeurProgression(nomChamp: string, cle: 'du' | 'au' | 'total' | 'complet', valeur: string | boolean) {
     setForm((f) => {
       const existante = f.details[nomChamp]
-      const base = existante && estProgressionFormulaire(existante) ? existante : { genre: 'progression' as const, du: '', au: '', complet: false }
+      const base =
+        existante && estProgressionFormulaire(existante)
+          ? existante
+          : { genre: 'progression' as const, du: '', au: '', total: '', complet: false }
       return { ...f, details: { ...f.details, [nomChamp]: { ...base, [cle]: valeur } } }
     })
   }
@@ -596,37 +614,63 @@ export const AddEditSheet = forwardRef<AddEditSheetHandle, AddEditSheetProps>(fu
               )
             }
 
-            return (
-              <div className="field" key={champ.nom}>
-                <label htmlFor={`fChamp-${champ.nom}`}>{champ.nom}</label>
-                <div className="row2">
+            {
+              const prog = valeurProgressionDe(champ.nom)
+              const totalNum = Number(prog.total) || 0
+              const auNum = Number(prog.au) || 0
+              const pourcent = totalNum > 0 ? Math.max(0, Math.min(100, Math.round((auNum / totalNum) * 100))) : null
+              return (
+                <div className="field" key={champ.nom}>
+                  <label htmlFor={`fChamp-${champ.nom}`}>{champ.nom}</label>
+                  <div className="row2">
+                    <input
+                      id={`fChamp-${champ.nom}`}
+                      type="number"
+                      placeholder="Du tome n°"
+                      aria-label={`${champ.nom} — du tome n°`}
+                      value={prog.du}
+                      onChange={(e) => definirValeurProgression(champ.nom, 'du', e.target.value)}
+                    />
+                    <input
+                      type="number"
+                      placeholder="Au tome n°"
+                      aria-label={`${champ.nom} — au tome n°`}
+                      value={prog.au}
+                      onChange={(e) => definirValeurProgression(champ.nom, 'au', e.target.value)}
+                    />
+                  </div>
                   <input
-                    id={`fChamp-${champ.nom}`}
                     type="number"
-                    placeholder="Du tome n°"
-                    aria-label={`${champ.nom} — du tome n°`}
-                    value={valeurProgressionDe(champ.nom).du}
-                    onChange={(e) => definirValeurProgression(champ.nom, 'du', e.target.value)}
+                    placeholder="Total de tomes existants (optionnel)"
+                    aria-label={`${champ.nom} — total de tomes existants`}
+                    value={prog.total}
+                    onChange={(e) => definirValeurProgression(champ.nom, 'total', e.target.value)}
                   />
-                  <input
-                    type="number"
-                    placeholder="Au tome n°"
-                    aria-label={`${champ.nom} — au tome n°`}
-                    value={valeurProgressionDe(champ.nom).au}
-                    onChange={(e) => definirValeurProgression(champ.nom, 'au', e.target.value)}
-                  />
+                  {pourcent != null ? (
+                    <div className="fact-progression--jauge">
+                      <span>
+                        Tome {auNum} sur {totalNum}
+                        {auNum >= totalNum && <span className="jauge-badge">Complète</span>}
+                      </span>
+                      <div className="jauge" aria-hidden="true">
+                        <div className="jauge-remplissage" style={{ width: `${pourcent}%` }} />
+                      </div>
+                      <span className="note">{pourcent} %</span>
+                    </div>
+                  ) : (
+                    <label className="switch-row">
+                      <span>Série complète</span>
+                      <input
+                        type="checkbox"
+                        role="switch"
+                        checked={prog.complet}
+                        onChange={(e) => definirValeurProgression(champ.nom, 'complet', e.target.checked)}
+                      />
+                    </label>
+                  )}
                 </div>
-                <label className="switch-row">
-                  <span>Série complète</span>
-                  <input
-                    type="checkbox"
-                    role="switch"
-                    checked={valeurProgressionDe(champ.nom).complet}
-                    onChange={(e) => definirValeurProgression(champ.nom, 'complet', e.target.checked)}
-                  />
-                </label>
-              </div>
-            )
+              )
+            }
           })}
 
           <div className="field">

@@ -9,7 +9,7 @@ import { PiecesJointes } from './PiecesJointes'
 import { SalleIcone } from './SalleIcone'
 import { Vitrine } from './Vitrine'
 import { useReducedMotion } from '../lib/useReducedMotion'
-import { trouverProgression } from '../lib/valeurObjet'
+import { pourcentageProgression, trouverProgression } from '../lib/valeurObjet'
 import { estAssociation, trouverObjetsLies } from '../lib/associations'
 import type { ValeurProgression } from '../db/types'
 
@@ -295,27 +295,45 @@ export const ObjectSheet = forwardRef<ObjectSheetHandle, ObjectSheetProps>(funct
                   <dd>{objet.anneeCreation}</dd>
                 </div>
               )}
-              {champProgression && progression && (
-                <div>
-                  <dt>{champProgression.nom}</dt>
-                  <dd>
-                    <div className="fact-progression">
-                      <span>
-                        Tomes {progression.du} à {progression.au}
-                      </span>
-                      <label className="switch-row compact">
-                        <span>Série complète</span>
-                        <input
-                          type="checkbox"
-                          role="switch"
-                          checked={progression.complet}
-                          onChange={(e) => toggleSerieComplete(champProgression.nom, progression, e.target.checked)}
-                        />
-                      </label>
+              {champProgression &&
+                progression &&
+                (() => {
+                  const pourcent = pourcentageProgression(progression)
+                  return (
+                    <div>
+                      <dt>{champProgression.nom}</dt>
+                      <dd>
+                        {pourcent != null ? (
+                          <div className="fact-progression fact-progression--jauge fact-progression--jauge-fiche">
+                            <span>
+                              Tome {progression.au} sur {progression.total}
+                              {progression.complet && <span className="jauge-badge">Complète</span>}
+                            </span>
+                            <div className="jauge" aria-hidden="true">
+                              <div className="jauge-remplissage" style={{ width: `${pourcent}%` }} />
+                            </div>
+                            <span className="note">{pourcent} %</span>
+                          </div>
+                        ) : (
+                          <div className="fact-progression">
+                            <span>
+                              Tomes {progression.du} à {progression.au}
+                            </span>
+                            <label className="switch-row compact">
+                              <span>Série complète</span>
+                              <input
+                                type="checkbox"
+                                role="switch"
+                                checked={progression.complet}
+                                onChange={(e) => toggleSerieComplete(champProgression.nom, progression, e.target.checked)}
+                              />
+                            </label>
+                          </div>
+                        )}
+                      </dd>
                     </div>
-                  </dd>
-                </div>
-              )}
+                  )
+                })()}
               {objet.reference && (
                 <div>
                   <dt>Référence</dt>
